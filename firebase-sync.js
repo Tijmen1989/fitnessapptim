@@ -28,7 +28,7 @@ var firebaseIsSyncing = false;
 
 // De UID die we gebruiken voor data — eigen UID of gekoppelde UID
 function getSyncUid() {
-  var linked = localStorage.getItem('lt_linkedUid');
+  var linked = localStorage.getItem('tim_linkedUid');
   if (linked) return linked;
   return firebaseUser ? firebaseUser.uid : null;
 }
@@ -40,22 +40,22 @@ function initFirebase() {
       return;
     }
 
-    firebaseApp = firebase.initializeApp(firebaseConfig);
-    firebaseDb = firebase.firestore();
+    firebaseApp = firebase.initializeApp(firebaseConfig, 'tim-app');
+    firebaseDb = firebase.firestore(firebaseApp);
 
     firebaseDb.enablePersistence({ synchronizeTabs: true }).catch(function(err) {
       console.log('[CloudSync] Persistence niet beschikbaar:', err.code);
     });
 
-    firebase.auth().signInAnonymously().then(function(result) {
+    firebase.auth(firebaseApp).signInAnonymously().then(function(result) {
       firebaseUser = result.user;
       firebaseSyncEnabled = true;
       console.log('[CloudSync] Verbonden als:', firebaseUser.uid);
       console.log('[CloudSync] Sync UID:', getSyncUid());
 
-      var storedUid = localStorage.getItem('lt_firebaseUid');
+      var storedUid = localStorage.getItem('tim_firebaseUid');
       if (!storedUid) {
-        localStorage.setItem('lt_firebaseUid', firebaseUser.uid);
+        localStorage.setItem('tim_firebaseUid', firebaseUser.uid);
       }
 
       processFirebaseSyncQueue();
@@ -65,7 +65,7 @@ function initFirebase() {
       console.log('[CloudSync] Aanmelden mislukt:', err.message);
     });
 
-    firebase.auth().onAuthStateChanged(function(user) {
+    firebase.auth(firebaseApp).onAuthStateChanged(function(user) {
       if (user) {
         firebaseUser = user;
         firebaseSyncEnabled = true;
@@ -106,7 +106,7 @@ function fullSyncToCloud() {
   var allData = {};
   for (var i = 0; i < localStorage.length; i++) {
     var key = localStorage.key(i);
-    if (key.startsWith('lt_') && key !== 'lt_firebaseUid' && key !== 'lt_linkedUid' && key !== 'lt_koppelcode') {
+    if (key.startsWith('tim_') && key !== 'tim_firebaseUid' && key !== 'tim_linkedUid' && key !== 'tim_koppelcode') {
       try {
         allData[key] = JSON.parse(localStorage.getItem(key));
       } catch(e) {
@@ -157,7 +157,7 @@ function checkCloudRestore() {
     }
 
     var cloudData = doc.data();
-    if (!cloudData['lt_sessions'] || cloudData['lt_sessions'].length === 0) {
+    if (!cloudData['tim_sessions'] || cloudData['tim_sessions'].length === 0) {
       console.log('[CloudSync] Cloud data is ook leeg.');
       return;
     }
@@ -166,7 +166,7 @@ function checkCloudRestore() {
 
     var restored = 0;
     Object.keys(cloudData).forEach(function(key) {
-      if (key.startsWith('lt_') && key !== 'lt_firebaseUid') {
+      if (key.startsWith('tim_') && key !== 'tim_firebaseUid') {
         localStorage.setItem(key, JSON.stringify(cloudData[key]));
         restored++;
       }
@@ -174,7 +174,7 @@ function checkCloudRestore() {
 
     console.log('[CloudSync] ' + restored + ' items hersteld vanuit cloud');
 
-    alert('Je trainingsdata is hersteld vanuit de cloud! (' + (cloudData['lt_sessions'] ? cloudData['lt_sessions'].length : 0) + ' trainingen). De app wordt herladen.');
+    alert('Je trainingsdata is hersteld vanuit de cloud! (' + (cloudData['tim_sessions'] ? cloudData['tim_sessions'].length : 0) + ' trainingen). De app wordt herladen.');
     location.reload();
 
   }).catch(function(err) {
@@ -210,7 +210,7 @@ function createKoppelcode() {
     _koppelcode: code,
     _koppelcodeCreatedAt: new Date().toISOString()
   }, { merge: true }).then(function() {
-    localStorage.setItem('lt_koppelcode', code);
+    localStorage.setItem('tim_koppelcode', code);
     console.log('[Koppelcode] Code aangemaakt:', code);
 
     // Toon de code
@@ -259,8 +259,8 @@ function useKoppelcode() {
     }
 
     // Sla de gekoppelde UID op
-    localStorage.setItem('lt_linkedUid', linkedUid);
-    localStorage.setItem('lt_koppelcode', code);
+    localStorage.setItem('tim_linkedUid', linkedUid);
+    localStorage.setItem('tim_koppelcode', code);
     console.log('[Koppelcode] Gekoppeld aan UID:', linkedUid);
 
     // Haal data op van de gekoppelde account
@@ -274,13 +274,13 @@ function useKoppelcode() {
       var cloudData = userDoc.data();
       var restored = 0;
       Object.keys(cloudData).forEach(function(key) {
-        if (key.startsWith('lt_') && key !== 'lt_firebaseUid') {
+        if (key.startsWith('tim_') && key !== 'tim_firebaseUid') {
           localStorage.setItem(key, JSON.stringify(cloudData[key]));
           restored++;
         }
       });
 
-      var sessionCount = cloudData['lt_sessions'] ? cloudData['lt_sessions'].length : 0;
+      var sessionCount = cloudData['tim_sessions'] ? cloudData['tim_sessions'].length : 0;
       console.log('[Koppelcode] ' + restored + ' items hersteld van gekoppeld account');
       alert('Gekoppeld! ' + sessionCount + ' trainingen geladen. De app wordt herladen.');
       location.reload();
@@ -299,19 +299,19 @@ function useKoppelcode() {
 // Ontkoppel dit apparaat
 function unlinkDevice() {
   if (!confirm('Weet je zeker dat je wilt ontkoppelen? Je lokale data blijft behouden.')) return;
-  localStorage.removeItem('lt_linkedUid');
-  localStorage.removeItem('lt_koppelcode');
+  localStorage.removeItem('tim_linkedUid');
+  localStorage.removeItem('tim_koppelcode');
   console.log('[Koppelcode] Ontkoppeld');
   renderHistory();
 }
 
 // Check of we gekoppeld zijn
 function isDeviceLinked() {
-  return !!localStorage.getItem('lt_linkedUid');
+  return !!localStorage.getItem('tim_linkedUid');
 }
 
 function getActiveKoppelcode() {
-  return localStorage.getItem('lt_koppelcode') || null;
+  return localStorage.getItem('tim_koppelcode') || null;
 }
 
 // ── Sync status indicator ──

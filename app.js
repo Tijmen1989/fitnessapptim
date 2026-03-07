@@ -7,16 +7,16 @@ var APP_VERSION = '1.0.0';
 // STORAGE HELPERS
 // ================================================================
 function getStore(key, def) {
-  try { var v = localStorage.getItem('lt_' + key); return v ? JSON.parse(v) : def; }
+  try { var v = localStorage.getItem('tim_' + key); return v ? JSON.parse(v) : def; }
   catch(e) { return def; }
 }
 function setStore(key, val) {
-  localStorage.setItem('lt_' + key, JSON.stringify(val));
+  localStorage.setItem('tim_' + key, JSON.stringify(val));
   // Cloud sync: stuur belangrijke data automatisch naar Firebase
   if (typeof saveToCloud === 'function') {
     var cloudKeys = ['sessions', 'measurements', 'onboardingDone', 'darkMode', 'startDate', 'weekType', 'weightGoal', 'weekBEnabled', 'phaseOverride', 'remindersEnabled'];
     if (cloudKeys.indexOf(key) !== -1) {
-      saveToCloud('lt_' + key, val);
+      saveToCloud('tim_' + key, val);
     }
   }
 }
@@ -101,7 +101,7 @@ function getTrainingExercises(trainingKey) {
 
 function setPhaseOverride(phase) {
   if (phase === null) {
-    localStorage.removeItem('lt_phaseOverride');
+    localStorage.removeItem('tim_phaseOverride');
   } else {
     setStore('phaseOverride', phase);
   }
@@ -2356,50 +2356,75 @@ function renderHistory() {
     html += '</div>';
   }
 
-  // ── BODY MEASUREMENTS ──
+  // ── BUIKOMTREK (primary focus) ──
+  var measWithWaist = allMeasurements.filter(function(m) { return m.waist; });
+  html += '<div class="card">';
+  html += '<div class="card-header"><span class="icon">\uD83D\uDCCF</span> Buikomtrek <span style="font-weight:400;font-size:12px;color:var(--text-light)">\u2014 jouw belangrijkste maat</span></div>';
+  if (measWithWaist.length > 0) {
+    var latestWaist = measWithWaist[measWithWaist.length - 1];
+    var firstWaist = measWithWaist[0];
+    html += '<div style="text-align:center;padding:16px 16px 8px">';
+    html += '<div style="font-size:42px;font-weight:700;color:var(--primary)">' + latestWaist.waist + ' cm</div>';
+    if (measWithWaist.length >= 2) {
+      var waistDiff = (latestWaist.waist - firstWaist.waist).toFixed(1);
+      var waistColor = parseFloat(waistDiff) <= 0 ? 'var(--success)' : 'var(--error, #e74c3c)';
+      html += '<div style="font-size:14px;margin-top:8px;color:' + waistColor + ';font-weight:600">' + (parseFloat(waistDiff) <= 0 ? '' : '+') + waistDiff + ' cm sinds start</div>';
+    }
+    html += '</div>';
+    // Taille chart
+    if (measWithWaist.length >= 2) {
+      html += '<div class="chart-container"><canvas id="waistChart"></canvas></div>';
+    }
+    // T/H ratio
+    if (latestWaist.hip) {
+      var ratio = (latestWaist.waist / latestWaist.hip).toFixed(2);
+      var ratioColor = parseFloat(ratio) < 0.90 ? 'var(--success)' : parseFloat(ratio) < 0.95 ? 'var(--warning, orange)' : 'var(--error, #e74c3c)';
+      var ratioLabel = parseFloat(ratio) < 0.90 ? 'gezond' : parseFloat(ratio) < 0.95 ? 'verhoogd' : 'te hoog';
+      html += '<div style="text-align:center;padding:8px 16px 12px;font-size:13px">';
+      html += 'Taille/heup ratio: <strong style="color:' + ratioColor + '">' + ratio + '</strong> <span style="color:var(--text-light)">(' + ratioLabel + ' \u2014 man < 0.90 is gezond)</span>';
+      html += '</div>';
+    }
+    // Motivational message based on waist
+    html += '<div style="padding:8px 16px 12px;font-size:13px;color:var(--text)">';
+    if (measWithWaist.length >= 2 && parseFloat(waistDiff) < 0) {
+      html += '\uD83D\uDCAA Je buikomtrek daalt \u2014 precies wat je wilt! Gewicht kan schommelen door spiermassa, maar de centimeters vertellen het echte verhaal.';
+    } else if (measWithWaist.length >= 2 && parseFloat(waistDiff) === 0) {
+      html += '\uD83D\uDC4D Je buikomtrek is stabiel. Als je gewicht stijgt maar je buik niet groeit, bouw je spier op \u2014 dat is goed!';
+    } else if (measWithWaist.length < 2) {
+      html += '\uD83D\uDCCA Meet je buikomtrek elke 1\u20132 weken. Dit is veel belangrijker dan je gewicht, want je bouwt ook spier op!';
+    } else {
+      html += '\uD83D\uDCAA Blijf volhouden! Buikomtrek kan schommelen. Focus op je training en eiwitinname.';
+    }
+    html += '</div>';
+  } else {
+    html += '<div style="padding:16px;text-align:center">';
+    html += '<div style="font-size:32px;margin-bottom:8px">\uD83D\uDCCF</div>';
+    html += '<div style="font-size:14px;color:var(--text);margin-bottom:4px"><strong>Meet je buikomtrek!</strong></div>';
+    html += '<div style="font-size:13px;color:var(--text-light);line-height:1.5">Dit is je belangrijkste maat. Meet op navelhoogte, ontspannen, staand. Doe dit elke 1\u20132 weken.<br>Je gewicht kan stijgen door spiermassa \u2014 maar je buik vertelt het echte verhaal.</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // ── GEWICHT (secondary) ──
   var weightGoal = getStore('weightGoal', 70);
   html += '<div class="card">';
-  html += '<div class="card-header"><span class="icon">\uD83D\uDCCF</span> Gewicht & metingen</div>';
+  html += '<div class="card-header"><span class="icon">\u2696\uFE0F</span> Gewicht</div>';
   html += '<div id="measurementsList">';
   if (measurements.length > 0) {
     var latestM = measurements[measurements.length - 1];
     var firstM = measurements[0];
 
-    html += '<div style="text-align:center;padding:16px 16px 8px">';
-    html += '<div style="font-size:36px;font-weight:700;color:var(--primary)">' + latestM.weight + ' kg</div>';
-    html += '<div style="font-size:13px;color:var(--text-light);margin-top:4px">Doel: ' + weightGoal + ' kg</div>';
-
-    if (measurements.length >= 2) {
-      var startWeight = firstM.weight;
-      var totalToLose = startWeight - weightGoal;
-      var lostSoFar = startWeight - latestM.weight;
-      if (totalToLose > 0) {
-        var goalPct = Math.max(0, Math.min(100, Math.round((lostSoFar / totalToLose) * 100)));
-        html += '<div style="background:var(--border);border-radius:8px;height:8px;margin:12px auto;max-width:250px;overflow:hidden">';
-        html += '<div style="background:var(--success);height:100%;width:' + goalPct + '%;border-radius:8px;transition:width 0.3s"></div></div>';
-        html += '<div style="font-size:12px;color:var(--text-light)">' + goalPct + '% van je doel bereikt</div>';
-      }
-    }
+    html += '<div style="text-align:center;padding:12px 16px 8px">';
+    html += '<div style="font-size:28px;font-weight:700;color:var(--text)">' + latestM.weight + ' kg</div>';
+    html += '<div style="font-size:12px;color:var(--text-light);margin-top:4px">Doel: ' + weightGoal + ' kg \u2014 <em>gewicht kan stijgen door spieropbouw, dat is prima!</em></div>';
     html += '</div>';
 
-    html += '<div style="padding:8px 16px 12px">' + getWeightMessage(measurements, weightGoal) + '</div>';
+    html += '<div style="padding:4px 16px 12px">' + getWeightMessage(measurements, weightGoal) + '</div>';
 
-    // Taille/heup chart
+    // Taille/heup chart (legacy, smaller)
     var measWithBody = measurements.filter(function(m) { return m.waist && m.hip; });
     if (measWithBody.length >= 2) {
-      html += '<div class="chart-container" ><canvas id="waistHipChart"></canvas></div>';
-    }
-
-    var extras = [];
-    if (latestM.waist) extras.push('Taille: ' + latestM.waist + ' cm');
-    if (latestM.hip) extras.push('Heup: ' + latestM.hip + ' cm');
-    if (latestM.waist && latestM.hip) {
-      var ratio = (latestM.waist / latestM.hip).toFixed(2);
-      var ratioLabel = parseFloat(ratio) <= 0.80 ? ' \u2713 gezond' : parseFloat(ratio) <= 0.85 ? ' \u2014 verhoogd' : ' \u2014 te hoog';
-      extras.push('T/H ratio: ' + ratio + ratioLabel);
-    }
-    if (extras.length > 0) {
-      html += '<div style="font-size:12px;padding:0 16px 12px;color:var(--text-light)">' + extras.join(' \u00b7 ') + '</div>';
+      html += '<div class="chart-container"><canvas id="waistHipChart"></canvas></div>';
     }
 
     if (measurements.length > 1) {
@@ -2422,7 +2447,7 @@ function renderHistory() {
       html += '</div></div>';
     }
   } else {
-    html += '<div style="padding:14px 18px;color:var(--text-light);font-size:13px">Nog geen metingen. Weeg jezelf en voeg je eerste meting toe!</div>';
+    html += '<div style="padding:14px 18px;color:var(--text-light);font-size:13px">Nog geen metingen.</div>';
   }
   html += '</div>';
 
@@ -2434,7 +2459,6 @@ function renderHistory() {
     if (allMeasurements[bi].waist || allMeasurements[bi].hip) { lastBodyMeas = allMeasurements[bi]; break; }
   }
   var daysSinceBody = lastBodyMeas ? Math.floor((new Date() - new Date(lastBodyMeas.date)) / 86400000) : 999;
-  var showBodyFields = daysSinceBody >= 30 || !lastBodyMeas;
 
   if (lastMeasDate) {
     var lastD = new Date(lastMeasDate);
@@ -2444,9 +2468,16 @@ function renderHistory() {
     if (lastBodyMeas) {
       var bodyD = new Date(lastBodyMeas.date);
       var bodyDateStr = bodyD.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' });
-      html += '<tr><td style="padding:3px 12px 3px 0;white-space:nowrap">Laatste taille/heup</td><td style="padding:3px 0">' + bodyDateStr + '</td></tr>';
+      html += '<tr><td style="padding:3px 12px 3px 0;white-space:nowrap">Laatste buikmeting</td><td style="padding:3px 0">' + bodyDateStr + ' <span style="opacity:0.7">(' + daysSinceBody + ' dag' + (daysSinceBody !== 1 ? 'en' : '') + ' geleden)</span></td></tr>';
     }
     html += '</table>';
+  }
+
+  // Reminder: waist measurement every 1-2 weeks (more frequent than before)
+  if (daysSinceBody >= 10 || !lastBodyMeas) {
+    html += '<div style="padding:8px 16px;background:var(--info-bg);border-left:3px solid var(--primary);margin:4px 0;font-size:13px;color:var(--text)">';
+    html += '\uD83D\uDCCF ' + (!lastBodyMeas ? 'Meet je buikomtrek \u2014 dit is belangrijker dan je gewicht!' : 'Tijd om je buikomtrek te meten! (elke 1\u20132 weken)');
+    html += '</div>';
   }
 
   if (daysSinceWeight >= 7 || measurements.length === 0) {
@@ -2455,21 +2486,11 @@ function renderHistory() {
     html += '</div>';
   }
 
-  if (showBodyFields) {
-    html += '<div style="padding:8px 16px;background:var(--info-bg);border-left:3px solid var(--primary);margin:4px 0;font-size:13px;color:var(--text)">';
-    html += '\uD83D\uDCCF ' + (!lastBodyMeas ? 'Tip: meet ook je taille & heup \u2014 1x per maand is genoeg.' : 'Tijd voor je maandelijkse taille/heup meting!');
-    html += '</div>';
-  }
-
   html += '<div class="checkin-form">';
-  html += '<div class="checkin-field"><label>Gewicht (kg)</label><input type="number" step="0.1" id="inputWeight" placeholder="bv. 74.5"></div>';
-  if (showBodyFields) {
-    html += '<div class="checkin-field"><label>Tailleomtrek (cm) <span style="font-weight:400;font-size:11px;color:var(--text-light)">\u2014 smalste punt, ter hoogte van navel</span></label><input type="number" step="0.5" id="inputWaist" placeholder="bv. 82"></div>';
-    html += '<div class="checkin-field"><label>Heupomtrek (cm) <span style="font-weight:400;font-size:11px;color:var(--text-light)">\u2014 breedste punt van je heupen</span></label><input type="number" step="0.5" id="inputHip" placeholder="bv. 100"></div>';
-  } else {
-    html += '<input type="hidden" id="inputWaist" value=""><input type="hidden" id="inputHip" value="">';
-  }
-  html += '<div class="checkin-field"><label>Streefgewicht (kg)</label><input type="number" step="0.5" id="inputGoal" value="' + weightGoal + '"></div>';
+  html += '<div class="checkin-field"><label>Gewicht (kg)</label><input type="number" step="0.1" id="inputWeight" placeholder="bv. 67.5"></div>';
+  html += '<div class="checkin-field"><label>Tailleomtrek (cm) <span style="font-weight:400;font-size:11px;color:var(--text-light)">\u2014 op navelhoogte, ontspannen, staand</span></label><input type="number" step="0.5" id="inputWaist" placeholder="bv. 88"></div>';
+  html += '<div class="checkin-field"><label>Heupomtrek (cm) <span style="font-weight:400;font-size:11px;color:var(--text-light)">\u2014 breedste punt</span></label><input type="number" step="0.5" id="inputHip" placeholder="bv. 98"></div>';
+  html += '<div class="checkin-field"><label>Streefgewicht (kg) <span style="font-weight:400;font-size:11px;color:var(--text-light)">\u2014 kan stijgen door spieropbouw</span></label><input type="number" step="0.5" id="inputGoal" value="' + weightGoal + '"></div>';
 
   html += '<div style="margin-bottom:12px">';
   html += '<button onclick="toggleMeetAdvies(this)" style="background:none;border:none;color:var(--primary-light);font-size:13px;cursor:pointer;padding:4px 0">Hoe meet ik goed? \u25BC</button>';
@@ -3110,7 +3131,72 @@ function createProgressCharts(sessions, measurements, weightGoal) {
     }
   }
 
-  // ─── 5. WAIST/HIP TREND ───
+  // ─── 5a. WAIST TREND (primary) ───
+  var waistCanvas = document.getElementById('waistChart');
+  if (waistCanvas) {
+    var measW = measurements.filter(function(m) { return m.waist; });
+    if (measW.length >= 2) {
+      var wcLabels = measW.map(function(m) { var d = new Date(m.date); return d.getDate() + '/' + (d.getMonth() + 1); });
+      var wcData = measW.map(function(m) { return m.waist; });
+      var wcMin = Math.min.apply(null, wcData) - 2;
+      var wcMax = Math.max.apply(null, wcData) + 2;
+
+      _chartInstances.push(new Chart(waistCanvas, {
+        type: 'line',
+        data: {
+          labels: wcLabels,
+          datasets: [{
+            label: 'Buikomtrek',
+            data: wcData,
+            borderColor: '#E67E22',
+            backgroundColor: function(ctx) {
+              var chart = ctx.chart;
+              if (!chart.chartArea) return 'rgba(230,126,34,0.15)';
+              var g = chart.ctx.createLinearGradient(0, chart.chartArea.top, 0, chart.chartArea.bottom);
+              g.addColorStop(0, 'rgba(230,126,34,0.25)');
+              g.addColorStop(1, 'rgba(230,126,34,0.02)');
+              return g;
+            },
+            borderWidth: 3,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 5,
+            pointBackgroundColor: '#E67E22',
+            pointBorderColor: isDark ? '#222' : '#fff',
+            pointBorderWidth: 2,
+            pointHoverRadius: 8,
+            pointHoverBorderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          aspectRatio: isMobile ? 1.3 : 2,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: Object.assign({}, defaultTooltip, {
+              callbacks: { label: function(ctx) { return ctx.parsed.y + ' cm'; } }
+            }),
+            annotation: { annotations: {} }
+          },
+          scales: {
+            y: {
+              min: wcMin, max: wcMax,
+              ticks: { callback: function(v) { return v + ' cm'; }, color: textColor, font: { size: chartFontSize } },
+              grid: { color: gridColor }
+            },
+            x: {
+              ticks: { color: textColor, font: { size: chartFontSize }, maxRotation: 45, maxTicksLimit: chartTicksLimit },
+              grid: { display: false }
+            }
+          }
+        }
+      }));
+    }
+  }
+
+  // ─── 5b. WAIST/HIP TREND (legacy) ───
   var whCanvas = document.getElementById('waistHipChart');
   if (whCanvas) {
     var measWH = measurements.filter(function(m) { return m.waist && m.hip; });
@@ -3296,7 +3382,7 @@ function importData(input) {
       setStore('sessions', data.sessions);
       if (data.measurements) setStore('measurements', data.measurements);
 
-      // Restore all lt_ keys
+      // Restore all tim_ keys
       if (data.weights) {
         Object.keys(data.weights).forEach(function(key) {
           localStorage.setItem(key, JSON.stringify(data.weights[key]));
@@ -3368,7 +3454,7 @@ function buildExportData() {
   };
   for (var i = 0; i < localStorage.length; i++) {
     var key = localStorage.key(i);
-    if (key.startsWith('lt_') && key !== 'lt_sessions' && key !== 'lt_measurements') {
+    if (key.startsWith('tim_') && key !== 'tim_sessions' && key !== 'tim_measurements') {
       try { data.settings[key] = JSON.parse(localStorage.getItem(key)); } catch(e) {}
     }
   }
@@ -3712,11 +3798,11 @@ function confirmResetAllData() {
   if (!confirm('Weet je ZEKER dat je alle data wilt wissen?\n\nAlle trainingen, metingen en instellingen worden verwijderd.\nDit kan NIET ongedaan worden gemaakt!')) return;
   if (!confirm('Laatste kans: echt ALLES verwijderen?')) return;
 
-  // Verwijder alle lt_ keys uit localStorage
+  // Verwijder alle tim_ keys uit localStorage
   var keysToRemove = [];
   for (var i = 0; i < localStorage.length; i++) {
     var key = localStorage.key(i);
-    if (key && key.startsWith('lt_')) {
+    if (key && key.startsWith('tim_')) {
       keysToRemove.push(key);
     }
   }
