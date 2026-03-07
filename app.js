@@ -241,7 +241,16 @@ function videoUrlToImageUrl(videoUrl) {
 }
 
 function renderVideoHtml(ex) {
-  // YouTube embed (primary)
+  // Local video (primary) — autoplay loop like MuscleWiki
+  if (ex.videoUrl && ex.videoUrl.indexOf('videos/') === 0) {
+    return '<div class="exercise-video-container">' +
+      '<video class="exercise-video loaded" ' +
+      'src="' + ex.videoUrl + '" ' +
+      'autoplay loop muted playsinline ' +
+      'onerror="this.parentElement.style.display=\'none\'">' +
+      '</video></div>';
+  }
+  // YouTube embed (fallback for exercises without local video)
   if (ex.youtubeId) {
     return '<div class="exercise-video-container">' +
       '<iframe class="exercise-video loaded" ' +
@@ -249,15 +258,6 @@ function renderVideoHtml(ex) {
       'title="' + (ex.name || 'Oefening') + '" ' +
       'frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ' +
       'allowfullscreen loading="lazy"></iframe></div>';
-  }
-  // MuscleWiki OG image fallback
-  if (ex.videoUrl) {
-    var imgUrl = videoUrlToImageUrl(ex.videoUrl);
-    return '<div class="exercise-video-container">' +
-      '<img class="exercise-image" src="' + imgUrl + '" alt="' + (ex.name || 'Oefening') + '" ' +
-      'loading="lazy" onerror="this.parentElement.style.display=\'none\'" ' +
-      'onload="this.classList.add(\'loaded\')">' +
-      '</div>';
   }
   return '';
 }
@@ -309,17 +309,20 @@ function getWeightUnit(exerciseId) {
   return 'kg';
 }
 
-function setWeightStep(exerciseId, step, unit) {
+function setWeightStep(exerciseId, step, el) {
   var custom = getStore('weightSteps', {});
-  custom[exerciseId] = { step: parseFloat(step) || 2.5, unit: unit || getWeightUnit(exerciseId) };
+  custom[exerciseId] = { step: parseFloat(step) || 2.5, unit: getWeightUnit(exerciseId) };
   setStore('weightSteps', custom);
+  // Visual feedback
+  if (el) { el.style.borderColor = 'var(--success)'; setTimeout(function() { el.style.borderColor = ''; }, 800); }
 }
 
-function setWeightUnit(exerciseId, unit) {
+function setWeightUnit(exerciseId, unit, el) {
   var custom = getStore('weightSteps', {});
   var currentStep = getWeightStep(exerciseId);
   custom[exerciseId] = { step: currentStep, unit: unit };
   setStore('weightSteps', custom);
+  if (el) { el.style.borderColor = 'var(--success)'; setTimeout(function() { el.style.borderColor = ''; }, 800); }
 }
 
 function parseRepRange(repsStr) {
@@ -645,8 +648,10 @@ function renderTrainingStep() {
   }
 
   if (!ex.isPlank) {
-    var defaultWeight = (sessionExerciseLog[logKey] && sessionExerciseLog[logKey].weight) || prevWeight || 0;
-    var defaultReps = (sessionExerciseLog[logKey] && sessionExerciseLog[logKey].reps) || ex.defaultReps || 10;
+    var suggestedWeight = progression ? progression.suggested : prevWeight;
+    var suggestedReps = progression ? progression.targetReps : (ex.defaultReps || 8);
+    var defaultWeight = (sessionExerciseLog[logKey] && sessionExerciseLog[logKey].weight) || suggestedWeight || prevWeight || 0;
+    var defaultReps = (sessionExerciseLog[logKey] && sessionExerciseLog[logKey].reps) || suggestedReps || ex.defaultReps || 8;
     var step = getWeightStep(exId);
     var weightOptions = getSmartWeightOptions(exId, defaultWeight, step);
     var repRange = parseRepRange(ex.reps);
@@ -2666,6 +2671,19 @@ function renderProfile() {
   html += '</div>';
   html += '</div></div>';
 
+  // ── HOE KIES JE JE STARTGEWICHT ──
+  html += '<div class="card">';
+  html += '<div class="card-header"><span class="icon">\uD83D\uDCA1</span> Hoe kies je het juiste gewicht?</div>';
+  html += '<div style="padding:14px 16px;font-size:13px;color:var(--text-light);line-height:1.6">';
+  html += '<p style="margin-bottom:8px"><strong style="color:var(--text)">Begin licht.</strong> Kies een gewicht waarmee je makkelijk 12 herhalingen kunt doen. Het voelt misschien te makkelijk \u2014 dat is prima.</p>';
+  html += '<p style="margin-bottom:8px"><strong style="color:var(--text)">De vuistregel:</strong> na je set moet je het gevoel hebben dat je nog 3\u20134 herhalingen had kunnen doen. Kun je dat niet? Dan is het te zwaar.</p>';
+  html += '<p style="margin-bottom:8px"><strong style="color:var(--text)">Typische startgewichten:</strong></p>';
+  html += '<p style="margin-bottom:4px">\u2022 Machine-oefeningen (chest press, leg ext): <strong style="color:var(--text)">10\u201320 kg</strong></p>';
+  html += '<p style="margin-bottom:4px">\u2022 Dumbbells (row, curl, pullover): <strong style="color:var(--text)">4\u20138 kg</strong></p>';
+  html += '<p style="margin-bottom:8px">\u2022 Goblet squat: <strong style="color:var(--text)">6\u201310 kg</strong></p>';
+  html += '<p><strong style="color:var(--text)">De app regelt de rest:</strong> als je 3\u00d712 haalt, zegt de app automatisch wanneer je gewicht mag verhogen.</p>';
+  html += '</div></div>';
+
   // ── GEWICHTSSTAPPEN PER OEFENING ──
   html += '<div class="card">';
   html += '<div class="card-header"><span class="icon">\uD83C\uDFCB\uFE0F</span> Gewichtsstappen</div>';
@@ -2689,8 +2707,8 @@ function renderProfile() {
     html += '<tr style="border-bottom:1px solid var(--border)">';
     html += '<td style="padding:8px 0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + ex.name + '</td>';
     html += '<td style="padding:8px 0;text-align:right;white-space:nowrap">';
-    html += '<input type="number" step="0.25" min="0.25" value="' + step + '" onchange="setWeightStep(\'' + exId + '\',this.value)" style="width:56px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--card);color:var(--text)">';
-    html += ' <select onchange="setWeightUnit(\'' + exId + '\',this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--card);color:var(--text)">';
+    html += '<input type="number" step="0.25" min="0.25" value="' + step + '" oninput="setWeightStep(\'' + exId + '\',this.value,this)" style="width:56px;padding:4px 6px;border:2px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--card);color:var(--text);transition:border-color 0.3s">';
+    html += ' <select onchange="setWeightUnit(\'' + exId + '\',this.value,this)" style="padding:4px 6px;border:2px solid var(--border);border-radius:6px;font-size:13px;background:var(--card);color:var(--text);transition:border-color 0.3s">';
     html += '<option value="kg"' + (unit === 'kg' ? ' selected' : '') + '>kg</option>';
     html += '<option value="lbs"' + (unit === 'lbs' ? ' selected' : '') + '>lbs</option>';
     html += '</select>';

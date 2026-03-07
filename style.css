@@ -249,6 +249,13 @@ iframe.exercise-video {
   aspect-ratio: 16 / 9;
   border-radius: 12px;
 }
+video.exercise-video {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 12px;
+  display: block;
+  margin: 0 auto;
+}
 .exercise-video.loaded, .exercise-image.loaded {
   display: block;
 }

@@ -9,9 +9,9 @@ var EXERCISE_DB = {
     apparaat: 'Multipress \u2013 liggend',
     reps: '8\u201312',
     defaultReps: 8,
-    rest: 90,
+    rest: 60,
     tip: 'Langzaam omhoog duwen, niet de armen volledig strekken',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-Machine-machine-chest-press-side.mp4',
+    videoUrl: 'videos/chest-press.mp4',
     youtubeId: 'xUm0BiZCWlQ',
     instruction: {
       goal: 'Borst en voorkant van de armen trainen.',
@@ -31,10 +31,10 @@ var EXERCISE_DB = {
     apparaat: 'Multipress \u2013 half liggend',
     reps: '8\u201312',
     defaultReps: 8,
-    rest: 90,
+    rest: 60,
     phase: 2,
     tip: 'Zelfde beweging als chest press, iets meer schouder-activatie',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-dumbbell-incline-bench-press-side.mp4',
+    videoUrl: 'videos/incline-press.mp4',
     youtubeId: '8iPEnn-ltC8',
     instruction: {
       goal: 'Bovenste deel van de borst en voorkant schouders trainen.',
@@ -54,9 +54,9 @@ var EXERCISE_DB = {
     apparaat: 'Multipress \u2013 rechtop',
     reps: '8\u201312',
     defaultReps: 8,
-    rest: 90,
+    rest: 60,
     tip: 'Niet hoger duwen dan comfortabel. Let op bij nekklachten.',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-dumbbell-seated-overhead-press-side.mp4',
+    videoUrl: 'videos/shoulder-press.mp4',
     youtubeId: 'qEwKCR5JCog',
     instruction: {
       goal: 'Schouders en bovenste deel van de armen trainen.',
@@ -76,9 +76,9 @@ var EXERCISE_DB = {
     apparaat: 'Dumbbell + bankje',
     reps: '8\u201312 per arm',
     defaultReps: 8,
-    rest: 90,
-    tip: 'Rug recht, elleboog langs lichaam omhoog trekken',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-Dumbbells-dumbbell-single-arm-row-side.mp4',
+    rest: 60,
+    tip: 'Beide armen doen = 1 set. Rug recht, elleboog langs lichaam.',
+    videoUrl: 'videos/dumbbell-row.mp4',
     youtubeId: 'pYcpY20QaE8',
     instruction: {
       goal: 'Rug en achterkant van de armen trainen. Goed voor rugbreedte (V-vorm).',
@@ -86,7 +86,7 @@ var EXERCISE_DB = {
         'Zet \u00e9\u00e9n knie en hand op het bankje, andere voet op de grond.',
         'Pak de dumbbell met je vrije hand.',
         'Trek de dumbbell omhoog door je elleboog langs je lichaam te trekken.',
-        'Laat langzaam zakken tot je arm gestrekt is. Wissel daarna van kant.'
+        'Doe 8\u201312 herhalingen, wissel dan van arm. Beide armen = 1 set.'
       ],
       focus: 'Rug recht en stil houden. De beweging komt uit je arm en rug, niet uit je romp. Denk aan "elleboog naar het plafond trekken".',
       mistake: 'Je romp meedraaien om de dumbbell omhoog te krijgen. Als dat gebeurt, is het gewicht te zwaar.'
@@ -98,9 +98,9 @@ var EXERCISE_DB = {
     apparaat: 'Verstelbaar bankje + dumbbell',
     reps: '8\u201312',
     defaultReps: 8,
-    rest: 90,
+    rest: 60,
     tip: 'Armen licht gebogen houden, gecontroleerd bewegen',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-dumbbell-pullover-side.mp4',
+    videoUrl: 'videos/dumbbell-pullover.mp4',
     youtubeId: 'tpLnfSQJ0gg',
     instruction: {
       goal: 'Brede rugspieren (lats) trainen voor V-vorm. Vervangt de lat pulldown.',
@@ -120,9 +120,9 @@ var EXERCISE_DB = {
     apparaat: 'Dumbbells',
     reps: '8\u201312',
     defaultReps: 8,
-    rest: 60,
+    rest: 45,
     tip: 'Ellebogen stil houden, niet meeswingen',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-Dumbbells-dumbbell-curl-side.mp4',
+    videoUrl: 'videos/bicep-curl.mp4',
     youtubeId: 'ICAXJVmOJik',
     instruction: {
       goal: 'Biceps (voorkant bovenarm) trainen.',
@@ -142,9 +142,9 @@ var EXERCISE_DB = {
     apparaat: 'Leg extension apparaat',
     reps: '8\u201312',
     defaultReps: 8,
-    rest: 90,
+    rest: 45,
     tip: 'Langzaam omhoog, gecontroleerd terug laten zakken',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-machine-leg-extension-side.mp4',
+    videoUrl: 'videos/leg-ext.mp4',
     youtubeId: 'YyvSfVjQeL0',
     instruction: {
       goal: 'Voorkant van de bovenbenen (quadriceps) trainen.',
@@ -164,9 +164,9 @@ var EXERCISE_DB = {
     apparaat: 'Leg curl apparaat',
     reps: '8\u201312',
     defaultReps: 8,
-    rest: 90,
+    rest: 45,
     tip: 'Langzaam buigen, niet met een ruk',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-Machine-seated-leg-curl-side.mp4',
+    videoUrl: 'videos/leg-curl.mp4',
     youtubeId: 'ELOCsoDSmrg',
     instruction: {
       goal: 'Achterkant van de bovenbenen (hamstrings) trainen.',
@@ -186,9 +186,9 @@ var EXERCISE_DB = {
     apparaat: 'Dumbbell',
     reps: '8\u201312',
     defaultReps: 8,
-    rest: 90,
+    rest: 60,
     tip: 'Rug recht, knie\u00ebn in lijn met tenen. Stop bij rugklachten.',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-dumbbell-goblet-squat-side.mp4',
+    videoUrl: 'videos/goblet-squat.mp4',
     youtubeId: 'MeIiIdhvXT4',
     instruction: {
       goal: 'Benen, billen en core trainen met \u00e9\u00e9n oefening.',
@@ -208,9 +208,9 @@ var EXERCISE_DB = {
     apparaat: 'Op de grond',
     reps: '10\u201315',
     defaultReps: 10,
-    rest: 60,
+    rest: 45,
     tip: 'Knijp billen samen bovenaan, onderrug niet overmatig hollen',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-Bodyweight-glute-bridge-side.mp4',
+    videoUrl: 'videos/glute-bridge.mp4',
     youtubeId: '8bbE64NuDTU',
     instruction: {
       goal: 'Bilspieren activeren en bekkenstand verbeteren. Corrigeert anterior pelvic tilt.',
@@ -230,10 +230,10 @@ var EXERCISE_DB = {
     apparaat: 'Op de grond',
     reps: '20\u201330 sec',
     defaultReps: 0,
-    rest: 60,
+    rest: 45,
     tip: 'Lichaam recht, billen niet omhoog of omlaag',
     isPlank: true,
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-hand-plank-side_GnZ2NZh.mp4',
+    videoUrl: 'videos/plank.mp4',
     youtubeId: 'pSHjTRCQxIw',
     instruction: {
       goal: 'Core sterker maken. Traint de diepe spieren die de buik naar binnen trekken.',
@@ -247,47 +247,23 @@ var EXERCISE_DB = {
       mistake: 'Adem inhouden. Blijf rustig doorademen.'
     }
   },
-  'side-plank': {
-    id: 'side-plank',
-    name: 'Side plank',
-    apparaat: 'Op de grond',
-    reps: '15\u201320 sec per kant',
-    defaultReps: 0,
-    rest: 60,
-    isPlank: true,
-    phase: 2,
-    tip: 'Heupen omhoog, lichaam in rechte lijn',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-elbow-side-plank-front.mp4',
-    youtubeId: 'fLkJT44bRHo',
-    instruction: {
-      goal: 'Zijwaartse buikspieren en core sterker maken.',
-      steps: [
-        'Ga op je zij liggen, leun op je onderarm.',
-        'Til je heupen op zodat je lichaam een rechte lijn vormt.',
-        'Houd deze positie aan, wissel daarna van kant.',
-        'Begin met 15 seconden per kant.'
-      ],
-      focus: 'Heupen niet laten doorzakken. Span je buik aan en adem rustig door.',
-      mistake: 'Naar voren of achteren rollen. Houd je lichaam in \u00e9\u00e9n lijn.'
-    }
-  },
   'dead-bug': {
     id: 'dead-bug',
     name: 'Dead bug',
     apparaat: 'Op de grond',
     reps: '8 per kant',
     defaultReps: 8,
-    rest: 60,
-    tip: 'Onderrug blijft op de grond!',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-Bodyweight-dead-bug-side.mp4',
+    rest: 45,
+    tip: 'Rechts + links = 1 herhaling. Onderrug blijft op de grond!',
+    videoUrl: 'videos/dead-bug.mp4',
     youtubeId: 'x-BStnplCYg',
     instruction: {
       goal: 'Diepe core-stabiliteit. Topexercise voor rug-stabiliteit.',
       steps: [
         'Ga op je rug liggen, armen recht omhoog, knie\u00ebn op 90 graden.',
         'Strek tegelijkertijd je rechterarm achter je hoofd en je linkerbeen naar voren.',
-        'Houd je onderrug plat op de grond \u2014 dat is het belangrijkste.',
-        'Kom terug en wissel: linkerarm + rechterbeen.'
+        'Kom terug en wissel: linkerarm + rechterbeen. Rechts + links = 1 herhaling.',
+        'Houd je onderrug plat op de grond \u2014 dat is het belangrijkste.'
       ],
       focus: 'Je onderrug mag NIET van de grond komen. Als dat wel gebeurt, maak de beweging kleiner.',
       mistake: 'Onderrug laten opkomen van de grond. Maak de beweging kleiner als dat nodig is.'
@@ -299,9 +275,9 @@ var EXERCISE_DB = {
     apparaat: 'Op de grond',
     reps: '8 per kant',
     defaultReps: 8,
-    rest: 60,
-    tip: 'Houd je rug stil, niet meedraaien',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-Bodyweight-bird-dog-side.mp4',
+    rest: 45,
+    tip: 'Rechts + links = 1 herhaling. Rug stil houden!',
+    videoUrl: 'videos/bird-dog.mp4',
     youtubeId: 'vtwhC3tfVow',
     instruction: {
       goal: 'Rug-stabiliteit. De oefening die je rug het meest helpt.',
@@ -309,7 +285,7 @@ var EXERCISE_DB = {
         'Ga op handen en knie\u00ebn zitten.',
         'Strek tegelijkertijd je rechterarm naar voren en je linkerbeen naar achteren.',
         'Houd 2\u20133 seconden stil, rug blijft recht.',
-        'Kom terug en wissel: linkerarm + rechterbeen.'
+        'Kom terug en wissel: linkerarm + rechterbeen. Rechts + links = 1 herhaling.'
       ],
       focus: 'Je rug en heupen blijven stil \u2014 niet meedraaien of kantelen. Span je buik licht aan.',
       mistake: 'Je heup laten zakken naar de kant van het opgetilde been. Houd je heupen evenwijdig aan de grond.'
@@ -346,17 +322,16 @@ var EXERCISE_DB = {
     rest: 30,
     tip: 'Nooit forceren. Stoppen bij pijn.',
     videoUrl: '',
-    youtubeId: 't-1Z2ZYpmt0',
+    youtubeId: '',
     instruction: {
-      goal: 'Nekmobiliteit behouden en nekklachten verminderen.',
+      goal: 'Nekmobiliteit behouden en nekklachten voorkomen. Je doet 3 oefeningen achter elkaar.',
       steps: [
-        'Zit of sta rechtop.',
-        'Chin tuck: trek je kin naar je borst (maak een dubbelkin). Houd 3 sec. 5x.',
-        'Draai je hoofd langzaam naar links, dan naar rechts. 5x per kant.',
-        'Kantel je hoofd naar je linkerschouder, dan naar rechts. 5x per kant.'
+        '<strong>Oefening 1 — Chin Tuck (dubbelkin)</strong>: Ga rechtop zitten, kijk recht vooruit. Schuif je kin recht naar achteren (alsof je een dubbelkin maakt). Je hoofd gaat NIET omlaag — alleen naar achteren. Je voelt een stretch achter in je nek. Houd 3 seconden vast, ontspan. Herhaal 5x.',
+        '<strong>Oefening 2 — Nekrotatie (nee-schudden)</strong>: Kijk recht vooruit. Draai je hoofd langzaam naar links, alsof je over je schouder kijkt. Ga zo ver als comfortabel is. Kom terug naar het midden. Draai dan naar rechts. Herhaal 5x per kant.',
+        '<strong>Oefening 3 — Zijwaartse kanteling (oor naar schouder)</strong>: Kijk recht vooruit. Kantel je hoofd naar links — breng je linkeroor richting je linkerschouder. Je schouders blijven STIL (niet optrekken!). Kom terug naar het midden. Kantel dan naar rechts. Herhaal 5x per kant.'
       ],
-      focus: 'Nooit forceren. Ga alleen zo ver als comfortabel is. Chin tucks zijn het belangrijkst.',
-      mistake: 'Nekrollen maken (volledige cirkels met je hoofd). Dit kan nekklachten verergeren.'
+      focus: 'Alle bewegingen langzaam en gecontroleerd. Schouders laag en ontspannen. Nooit forceren — ga alleen zo ver als comfortabel is.',
+      mistake: 'Nekrollen maken (volledige cirkels met je hoofd) — dit kan nekklachten verergeren. Ook: schouders optrekken tijdens de oefeningen.'
     }
   },
   'shoulder-mobility': {
@@ -368,17 +343,15 @@ var EXERCISE_DB = {
     rest: 30,
     tip: 'Ontspannen bewegen, niet forceren',
     videoUrl: '',
-    youtubeId: 'zung2WQHmh0',
+    youtubeId: '',
     instruction: {
-      goal: 'Schoudermobiliteit verbeteren.',
+      goal: 'Schoudermobiliteit verbeteren. Je doet 2 oefeningen achter elkaar.',
       steps: [
-        'Armen langs je lichaam.',
-        'Maak kleine cirkels met je armen die langzaam groter worden.',
-        '10 cirkels vooruit, 10 cirkels achteruit.',
-        'Strek armen boven je hoofd en laat langzaam zakken. 10x.'
+        '<strong>Oefening 1 — Armcirkels</strong>: Sta rechtop, armen gestrekt langs je lichaam. Til je armen zijwaarts op en maak kleine cirkels. Maak de cirkels langzaam groter. Doe 10 cirkels vooruit, dan 10 cirkels achteruit.',
+        '<strong>Oefening 2 — Armen omhoog</strong>: Sta rechtop, armen langs je lichaam. Breng beide armen langzaam omhoog (via de zijkant) tot boven je hoofd. Laat ze langzaam weer zakken. Herhaal 10x. Adem in als je armen omhoog gaan, adem uit als ze zakken.'
       ],
-      focus: 'Ontspannen bewegen. Schouders laag houden.',
-      mistake: 'Te snel of te groot beginnen. Start klein en bouw op.'
+      focus: 'Ontspannen bewegen. Schouders laag houden — niet optrekken naar je oren.',
+      mistake: 'Te snel of te groot beginnen met de cirkels. Start klein en bouw langzaam op.'
     }
   }
 };
@@ -399,7 +372,7 @@ var PHASE_CONFIG = {
     unlockRequirement: { sessions: 18, weeks: 6 },
     krachtBoven: ['chest-press', 'incline-press', 'shoulder-press', 'dumbbell-row', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
     krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'bird-dog', 'cat-cow'],
-    krachtFull: ['chest-press', 'dumbbell-row', 'leg-ext', 'plank', 'side-plank', 'neck-mobility', 'shoulder-mobility']
+    krachtFull: ['chest-press', 'dumbbell-row', 'leg-ext', 'plank', 'neck-mobility', 'shoulder-mobility']
   }
 };
 
