@@ -347,7 +347,7 @@ var EXERCISE_DB = {
     instruction: {
       goal: 'Schoudermobiliteit verbeteren. Je doet 2 oefeningen achter elkaar.',
       steps: [
-        '<strong>Oefening 1 — Armcirkels</strong>: Sta rechtop, armen gestrekt langs je lichaam. Til je armen zijwaarts op en maak kleine cirkels. Maak de cirkels langzaam groter. Doe 10 cirkels vooruit, dan 10 cirkels achteruit.',
+        '<strong>Oefening 1 — Armcirkels</strong>: Sta rechtop. Strek je armen zijwaarts uit op schouderhoogte (T-vorm). Maak in deze positie kleine cirkels. Maak de cirkels langzaam groter. Doe 10 cirkels vooruit, dan 10 cirkels achteruit.',
         '<strong>Oefening 2 — Armen omhoog</strong>: Sta rechtop, armen langs je lichaam. Breng beide armen langzaam omhoog (via de zijkant) tot boven je hoofd. Laat ze langzaam weer zakken. Herhaal 10x. Adem in als je armen omhoog gaan, adem uit als ze zakken.'
       ],
       focus: 'Ontspannen bewegen. Schouders laag houden — niet optrekken naar je oren.',

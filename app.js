@@ -14,7 +14,7 @@ function setStore(key, val) {
   localStorage.setItem('tim_' + key, JSON.stringify(val));
   // Cloud sync: stuur belangrijke data automatisch naar Firebase
   if (typeof saveToCloud === 'function') {
-    var cloudKeys = ['sessions', 'measurements', 'onboardingDone', 'darkMode', 'startDate', 'weekType', 'weightGoal', 'weekBEnabled', 'phaseOverride', 'remindersEnabled'];
+    var cloudKeys = ['sessions', 'measurements', 'onboardingDone', 'darkMode', 'startDate', 'weekType', 'weightGoal', 'weekBEnabled', 'phaseOverride', 'remindersEnabled', 'weightSteps'];
     if (cloudKeys.indexOf(key) !== -1) {
       saveToCloud('tim_' + key, val);
     }
@@ -137,28 +137,34 @@ function getRecoveryStatus() {
   var last = recent[0];
   var lastDate = new Date(last.date);
   var daysSince = Math.floor((now - lastDate) / 86400000);
-  var isYesterday = daysSince <= 1;
+  var isToday = daysSince === 0;
+  var isYesterday = daysSince === 1;
   var isTwoDaysAgo = daysSince <= 2;
 
   var lastIsKracht = last.type === 'kracht';
   var lastIsBoven = last.name && last.name.toLowerCase().indexOf('boven') >= 0;
   var lastIsOnder = last.name && last.name.toLowerCase().indexOf('onder') >= 0;
 
-  // Regel 1: Gisteren kracht → vandaag geen kracht
+  // Regel 1: Vandaag al kracht gedaan → geen tweede kracht
+  if (lastIsKracht && isToday) {
+    result.warnings.push('Je hebt vandaag al krachttraining gedaan \u2014 goed bezig! Rust nu lekker uit.');
+    result.suggestion = 'cardio';
+  }
+  // Regel 1b: Gisteren kracht → vandaag geen kracht
   if (lastIsKracht && isYesterday) {
     result.warnings.push('Gisteren was krachttraining \u2014 een rustdag of lichte cardio is beter voor herstel.');
     result.suggestion = 'cardio';
   }
 
-  // Regel 2: Bovenlichaam recent → niet opnieuw boven
-  if (lastIsBoven && isTwoDaysAgo) {
-    result.warnings.push('Laatste training was bovenlichaam (' + daysSince + (daysSince === 1 ? ' dag' : ' dagen') + ' geleden). Onderlichaam of cardio is slimmer.');
+  // Regel 2: Bovenlichaam recent → niet opnieuw boven (niet vandaag)
+  if (lastIsBoven && !isToday && isTwoDaysAgo) {
+    result.warnings.push('Laatste training was bovenlichaam (' + (daysSince === 1 ? 'gisteren' : daysSince + ' dagen geleden') + '). Onderlichaam of cardio is slimmer.');
     if (!result.suggestion) result.suggestion = 'krachtOnder';
   }
 
-  // Regel 3: Onderlichaam recent → niet opnieuw onder
-  if (lastIsOnder && isTwoDaysAgo) {
-    result.warnings.push('Laatste training was onderlichaam (' + daysSince + (daysSince === 1 ? ' dag' : ' dagen') + ' geleden). Bovenlichaam of cardio is slimmer.');
+  // Regel 3: Onderlichaam recent → niet opnieuw onder (niet vandaag)
+  if (lastIsOnder && !isToday && isTwoDaysAgo) {
+    result.warnings.push('Laatste training was onderlichaam (' + (daysSince === 1 ? 'gisteren' : daysSince + ' dagen geleden') + '). Bovenlichaam of cardio is slimmer.');
     if (!result.suggestion) result.suggestion = 'krachtBoven';
   }
 
@@ -206,8 +212,11 @@ function getRecoveryWarningForTraining(trainingKey) {
   if (todayIsOnder && lastIsOnder && daysSince <= 2) {
     return '\u26A0 Laatste training was ook onderlichaam. Overweeg bovenlichaam of cardio voor beter herstel.';
   }
-  // Kracht na kracht gisteren?
-  if (lastIsKracht && daysSince <= 1) {
+  // Kracht na kracht vandaag of gisteren?
+  if (lastIsKracht && daysSince === 0) {
+    return '\u26A0 Je hebt vandaag al krachttraining gedaan \u2014 goed bezig! Rust nu lekker uit.';
+  }
+  if (lastIsKracht && daysSince === 1) {
     return '\u26A0 Gisteren was krachttraining \u2014 een rustdag of lichte cardio is beter voor herstel.';
   }
 
@@ -1014,14 +1023,16 @@ function renderCompletionInTrainingMode() {
   // Calculate stats
   var exerciseCount = 0;
   var maxWeight = 0;
+  var maxWeightExId = '';
   var completedSets = 0;
   Object.keys(sessionExerciseLog).forEach(function(key) {
     var entry = sessionExerciseLog[key];
     if (entry.done) {
       completedSets++;
-      if (entry.weight > maxWeight) maxWeight = entry.weight;
+      if (entry.weight > maxWeight) { maxWeight = entry.weight; maxWeightExId = entry.id; }
     }
   });
+  var maxWeightUnit = maxWeightExId ? getWeightUnit(maxWeightExId) : 'kg';
   var activeIds = currentExerciseIds.length > 0 ? currentExerciseIds : currentTraining.exerciseIds;
   exerciseCount = activeIds.length;
 
@@ -1034,7 +1045,7 @@ function renderCompletionInTrainingMode() {
   html += '<div class="completion-stat"><span class="completion-stat-label">Oefeningen</span><span class="completion-stat-value">' + exerciseCount + '</span></div>';
   html += '<div class="completion-stat"><span class="completion-stat-label">Sets voltooid</span><span class="completion-stat-value">' + completedSets + '</span></div>';
   if (maxWeight > 0) {
-    html += '<div class="completion-stat"><span class="completion-stat-label">Zwaarste gewicht</span><span class="completion-stat-value">' + maxWeight + ' kg</span></div>';
+    html += '<div class="completion-stat"><span class="completion-stat-label">Zwaarste gewicht</span><span class="completion-stat-value">' + maxWeight + ' ' + maxWeightUnit + '</span></div>';
   }
   html += '<div class="completion-stat"><span class="completion-stat-label">Datum</span><span class="completion-stat-value">' + formatDateNL(new Date()) + '</span></div>';
   html += '</div>';
@@ -2560,7 +2571,11 @@ function renderHistory() {
         if (s.exercises) {
           var weights = s.exercises.filter(function(e) { return e.weight > 0; }).map(function(e) { return e.weight; });
           var maxW = weights.length > 0 ? Math.max.apply(null, weights) : 0;
-          if (maxW > 0) weightStr = '— ' + maxW + ' kg';
+          if (maxW > 0) {
+            var maxEx = s.exercises.find(function(e) { return e.weight === maxW; });
+            var maxUnit = maxEx ? getWeightUnit(maxEx.id) : 'kg';
+            weightStr = '— ' + maxW + ' ' + maxUnit;
+          }
         }
 
         var feedbackStr = '';
@@ -2585,7 +2600,9 @@ function renderHistory() {
             var exName = exData ? exData.name : ex.id;
             html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">';
             html += '<span style="flex:1;color:var(--text)">' + exName + '</span>';
-            html += '<input type="number" step="0.5" value="' + (ex.weight || 0) + '" onchange="updateSessionWeight(' + sIdx + ',' + exIdx + ',this.value)" style="width:60px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center;background:var(--card);color:var(--text)"> kg';
+            var exUnit = getWeightUnit(ex.id);
+            var exStep = getWeightStep(ex.id);
+            html += '<input type="number" step="' + exStep + '" value="' + (ex.weight || 0) + '" onchange="updateSessionWeight(' + sIdx + ',' + exIdx + ',this.value)" style="width:60px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center;background:var(--card);color:var(--text)"> ' + exUnit;
             html += '</div>';
           });
         }
