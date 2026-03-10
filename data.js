@@ -9,6 +9,7 @@ var EXERCISE_DB = {
     apparaat: 'Multipress \u2013 liggend',
     reps: '8\u201312',
     defaultReps: 8,
+    defaultWeight: 20,
     rest: 60,
     tip: 'Langzaam omhoog duwen, niet de armen volledig strekken',
     videoUrl: 'videos/chest-press.mp4',
@@ -31,6 +32,7 @@ var EXERCISE_DB = {
     apparaat: 'Multipress \u2013 half liggend',
     reps: '8\u201312',
     defaultReps: 8,
+    defaultWeight: 15,
     rest: 60,
     phase: 2,
     tip: 'Zelfde beweging als chest press, iets meer schouder-activatie',
@@ -54,6 +56,7 @@ var EXERCISE_DB = {
     apparaat: 'Multipress \u2013 rechtop',
     reps: '8\u201312',
     defaultReps: 8,
+    defaultWeight: 12.5,
     rest: 60,
     tip: 'Niet hoger duwen dan comfortabel. Let op bij nekklachten.',
     videoUrl: 'videos/shoulder-press.mp4',
@@ -76,6 +79,7 @@ var EXERCISE_DB = {
     apparaat: 'Dumbbell + bankje',
     reps: '8\u201312 per arm',
     defaultReps: 8,
+    defaultWeight: 10,
     rest: 60,
     tip: 'Beide armen doen = 1 set. Rug recht, elleboog langs lichaam.',
     videoUrl: 'videos/dumbbell-row.mp4',
@@ -98,6 +102,7 @@ var EXERCISE_DB = {
     apparaat: 'Verstelbaar bankje + dumbbell',
     reps: '8\u201312',
     defaultReps: 8,
+    defaultWeight: 8,
     rest: 60,
     tip: 'Armen licht gebogen houden, gecontroleerd bewegen',
     videoUrl: 'videos/dumbbell-pullover.mp4',
@@ -120,6 +125,7 @@ var EXERCISE_DB = {
     apparaat: 'Dumbbells',
     reps: '8\u201312',
     defaultReps: 8,
+    defaultWeight: 6,
     rest: 45,
     tip: 'Ellebogen stil houden, niet meeswingen',
     videoUrl: 'videos/bicep-curl.mp4',
@@ -142,6 +148,7 @@ var EXERCISE_DB = {
     apparaat: 'Leg extension apparaat',
     reps: '8\u201312',
     defaultReps: 8,
+    defaultWeight: 20,
     rest: 45,
     tip: 'Langzaam omhoog, gecontroleerd terug laten zakken',
     videoUrl: 'videos/leg-ext.mp4',
@@ -164,6 +171,7 @@ var EXERCISE_DB = {
     apparaat: 'Leg curl apparaat',
     reps: '8\u201312',
     defaultReps: 8,
+    defaultWeight: 15,
     rest: 45,
     tip: 'Langzaam buigen, niet met een ruk',
     videoUrl: 'videos/leg-curl.mp4',
@@ -186,6 +194,7 @@ var EXERCISE_DB = {
     apparaat: 'Dumbbell',
     reps: '8\u201312',
     defaultReps: 8,
+    defaultWeight: 8,
     rest: 60,
     tip: 'Rug recht, knie\u00ebn in lijn met tenen. Stop bij rugklachten.',
     videoUrl: 'videos/goblet-squat.mp4',
@@ -382,7 +391,8 @@ var TRAINING_DATA = {
     name: 'Kracht: bovenlichaam + core',
     type: 'kracht',
     warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
-    cooldown: '5 min rustig wandelen + stretchen schouders, borst, rug + hip flexor stretch (30s/kant)',
+    cooldown: '5 min rustig wandelen, daarna deze stretches:',
+    cooldownStretches: ['chest-doorway', 'hip-flexor', 'rug-stretch'],
     exerciseIds: ['chest-press', 'shoulder-press', 'dumbbell-row', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug']
   },
   krachtOnder: {
@@ -390,7 +400,8 @@ var TRAINING_DATA = {
     name: 'Kracht: onderlichaam + rug',
     type: 'kracht',
     warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
-    cooldown: '5 min rustig wandelen + stretchen bovenbenen, billen, onderrug + hip flexor stretch (30s/kant)',
+    cooldown: '5 min rustig wandelen, daarna deze stretches:',
+    cooldownStretches: ['hamstrings', 'quads', 'glutes', 'hip-flexor'],
     exerciseIds: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'bird-dog', 'cat-cow']
   },
   krachtFull: {
@@ -398,7 +409,8 @@ var TRAINING_DATA = {
     name: 'Kracht: full body + mobiliteit',
     type: 'kracht',
     warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
-    cooldown: '5 min rustig wandelen + volledige stretchroutine (10 min)',
+    cooldown: '5 min rustig wandelen, daarna volledige stretchroutine:',
+    cooldownStretches: ['hip-flexor', 'hamstrings', 'quads', 'chest-doorway', 'rug-stretch', 'glutes'],
     exerciseIds: ['chest-press', 'dumbbell-row', 'leg-ext', 'plank', 'neck-mobility', 'shoulder-mobility']
   },
   loopband: {
@@ -437,6 +449,62 @@ var TRAINING_DATA = {
           { name: 'Cooldown', duur: 5, detail: '5.0 km/u, incline 0%', intensity: 'low' }
         ],
         interval: { fast: 60, slow: 120, fastDetail: '8.0\u20139.0 km/u', slowDetail: '5.5 km/u' }
+      }
+    ]
+  },
+  cardioVariatie: {
+    id: 'cardio-variatie',
+    name: 'Cardio variatie',
+    type: 'cardio',
+    options: [
+      {
+        name: 'Crosstrainer (aanbevolen)',
+        totalMin: 40,
+        isPrimary: true,
+        phases: [
+          { name: 'Warming-up', duur: 5, detail: 'Laag tempo, lichte weerstand', intensity: 'low' },
+          { name: 'Hoofddeel', duur: 30, detail: 'Matig tempo, weerstand 5\u20137', intensity: 'medium' },
+          { name: 'Cooldown', duur: 5, detail: 'Laag tempo, lichte weerstand', intensity: 'low' }
+        ],
+        interval: null
+      },
+      {
+        name: 'Recumbent bike',
+        totalMin: 35,
+        phases: [
+          { name: 'Warming-up', duur: 5, detail: 'Laag tempo, lichte weerstand', intensity: 'low' },
+          { name: 'Hoofddeel', duur: 25, detail: 'Matig tempo, weerstand 4\u20136', intensity: 'medium' },
+          { name: 'Cooldown', duur: 5, detail: 'Laag tempo, lichte weerstand', intensity: 'low' }
+        ],
+        interval: null
+      }
+    ]
+  },
+  cardioLicht: {
+    id: 'cardio-licht',
+    name: 'Lichte cardio',
+    type: 'cardio',
+    options: [
+      {
+        name: 'Loopband rustig (aanbevolen)',
+        totalMin: 30,
+        isPrimary: true,
+        phases: [
+          { name: 'Warming-up', duur: 5, detail: '5.0 km/u, incline 0%', intensity: 'low' },
+          { name: 'Hoofddeel', duur: 20, detail: '5.5 km/u, incline 0\u20131%', intensity: 'low' },
+          { name: 'Cooldown', duur: 5, detail: '5.0 km/u, incline 0%', intensity: 'low' }
+        ],
+        interval: null
+      },
+      {
+        name: 'Hometrainer',
+        totalMin: 30,
+        phases: [
+          { name: 'Warming-up', duur: 5, detail: 'Laag tempo, lichte weerstand', intensity: 'low' },
+          { name: 'Hoofddeel', duur: 20, detail: 'Matig tempo, weerstand 3\u20135', intensity: 'low' },
+          { name: 'Cooldown', duur: 5, detail: 'Laag tempo, lichte weerstand', intensity: 'low' }
+        ],
+        interval: null
       }
     ]
   }

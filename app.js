@@ -43,18 +43,6 @@ function getWeekType() {
   return 'A';
 }
 
-function isWeekBReady() {
-  // Tim doesn't use Week B rotation - always false
-  return false;
-}
-
-function toggleWeekB() {
-  var current = getStore('weekBEnabled', false);
-  setStore('weekBEnabled', !current);
-  renderToday();
-  renderHistory();
-}
-
 // ================================================================
 // PROGRESSIVE PHASES
 // ================================================================
@@ -431,7 +419,20 @@ function getProgressionSuggestion(exerciseId) {
       if (ex && ex.weight > 0) { lastSession = ex; break; }
     }
   }
-  if (!lastSession) return null;
+  if (!lastSession) {
+    // Eerste sessie: geef beginner advies
+    var ex = getExercise(exerciseId);
+    if (ex && ex.defaultWeight) {
+      return {
+        ready: false,
+        current: 0,
+        suggested: ex.defaultWeight,
+        targetReps: minReps,
+        message: '\uD83C\uDD95 Start met ' + ex.defaultWeight + ' ' + getWeightUnit(exerciseId) + ' \u00b7 ' + numSets + '\u00d7' + minReps
+      };
+    }
+    return null;
+  }
 
   var lastWeight = lastSession.weight;
   var lastReps = lastSession.reps || minReps;
@@ -710,9 +711,9 @@ function renderTrainingStep() {
 
     if (tmState === 'plank-timer') {
       html += '<div class="tm-timer plank-active" id="tmTimerDisplay">' + formatTimer(tmTimerSeconds) + '</div>';
-      html += '<div style="font-size:14px;color:var(--text-light);margin-bottom:16px">Hou vol! Je kan dit!</div>';
+      html += '<div style="font-size:14px;color:var(--text-light);margin-bottom:16px">Hou vol! Je kunt dit!</div>';
     } else {
-      html += '<div style="margin-bottom:16px;font-size:16px;color:var(--text-light)">Houd ' + ex.reps + ' vol</div>';
+      html += '<div style="margin-bottom:16px;font-size:16px;color:var(--text-light)">Houd ' + ex.reps + ' vol!</div>';
       html += '<button class="tm-btn tm-btn-accent" onclick="startPlankTimer(' + plankSec + ')">Start plank timer (' + plankSec + ' sec)</button>';
     }
   }
@@ -806,9 +807,17 @@ function finishWarmup() {
   renderTrainingStep();
 }
 
+function getStretchById(id) {
+  for (var i = 0; i < STRETCH_ROUTINES.length; i++) {
+    if (STRETCH_ROUTINES[i].id === id) return STRETCH_ROUTINES[i];
+  }
+  return null;
+}
+
 function renderCooldownScreen() {
   var body = document.getElementById('tmBody');
   var cooldown = currentTraining.cooldown;
+  var stretchIds = currentTraining.cooldownStretches || [];
 
   updateProgressBar();
 
@@ -818,20 +827,45 @@ function renderCooldownScreen() {
   html += '<div class="tm-exercise-name">Cooldown</div>';
   html += '<div style="color:var(--text-light);font-size:15px;margin:8px 0 4px;line-height:1.5">' + (cooldown || '5 min rustig stretchen') + '</div>';
 
+  // Show concrete stretch exercises
+  if (stretchIds.length > 0) {
+    html += '<div style="text-align:left;margin:12px 0;background:var(--bg);border-radius:12px;padding:4px 0">';
+    stretchIds.forEach(function(sid, idx) {
+      var s = getStretchById(sid);
+      if (!s) return;
+      html += '<div style="padding:10px 14px;border-top:' + (idx === 0 ? 'none' : '1px solid var(--border)') + '">';
+      html += '<div style="display:flex;align-items:center;gap:8px">';
+      html += '<span style="font-size:12px;font-weight:700;color:var(--primary);min-width:18px">' + (idx + 1) + '</span>';
+      html += '<div style="flex:1"><div style="font-size:14px;font-weight:600">' + s.name + ' <span style="font-weight:400;color:var(--text-light);font-size:12px">' + s.duur + 's' + (s.perKant ? '/kant' : '') + '</span></div></div>';
+      html += '<button onclick="toggleCooldownStretchDetail(\'' + sid + '\')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--primary);cursor:pointer">?</button>';
+      html += '</div>';
+      html += '<div id="cooldown-stretch-' + sid + '" style="display:none;margin-top:6px;padding:4px 0 0 26px">';
+      html += '<p style="font-size:12px;color:var(--text-light);line-height:1.5;margin:0">' + s.instruction + '</p>';
+      if (s.focus) html += '<p style="font-size:12px;color:var(--success);line-height:1.4;margin:4px 0 0">\u2714\uFE0F ' + s.focus + '</p>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
   if (tmState === 'cooldown-timer') {
     html += '<div class="tm-timer cooldown" id="tmTimerDisplay">' + formatTimer(tmTimerSeconds) + '</div>';
     html += '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px">';
-    html += '<button class="tm-btn tm-btn-success" onclick="finishCooldown()">Klaar!</button>';
+    html += '<button class="tm-btn tm-btn-success" onclick="finishCooldown()">\u2705 Cooldown klaar!</button>';
     html += '<button class="tm-btn tm-btn-outline" style="max-width:150px" onclick="addRestTime(60)">+1 min</button>';
     html += '</div>';
   } else {
     html += '<button class="tm-btn tm-btn-accent" onclick="startCooldownTimer()" style="margin-top:16px">Start cooldown timer (5 min)</button>';
-    html += '<button class="tm-btn tm-btn-outline tm-btn-small" onclick="finishCooldown()" style="margin-top:8px">Overslaan</button>';
+    html += '<button class="tm-btn tm-btn-success tm-btn-small" onclick="finishCooldown()" style="margin-top:8px">\u2705 Cooldown klaar!</button>';
   }
 
   html += '</div>';
   body.innerHTML = html;
   document.getElementById('tmHeader').querySelector('h2').textContent = 'Cooldown';
+}
+
+function toggleCooldownStretchDetail(sid) {
+  var el = document.getElementById('cooldown-stretch-' + sid);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 function startCooldownTimer() {
@@ -1221,7 +1255,7 @@ var intervalTotalCycles = 0; // how many fast+slow cycles completed
 var intervalIsAutoMode = false; // true when in an auto-interval phase
 
 function startLoopbandWandelen() {
-  startCardioTimer('loopbandWandelen', 0);
+  startCardioTimer('loopband', 0);
 }
 
 function startCardioTimer(trainingKey, optionIndex) {
@@ -1313,6 +1347,9 @@ function renderCardioTimerStep() {
   html += '<div style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">';
   if (cardioPhaseIndex < cardioPhases.length - 1) {
     html += '<button class="tm-btn tm-btn-accent" style="max-width:180px" onclick="skipCardioPhase()">Volgende fase</button>';
+  } else {
+    // Last phase (cooldown) — show "Klaar!" button
+    html += '<button class="tm-btn tm-btn-success" onclick="completeCardioSession()">\u2705 Cooldown klaar!</button>';
   }
   html += '</div>';
   html += '<button class="tm-btn tm-btn-outline tm-btn-small" style="margin-top:12px" onclick="stopCardioTimer()">Training stoppen</button>';
@@ -1430,7 +1467,7 @@ function completeCardioSession() {
   var html = '<div class="completion-screen">';
   html += '<div class="emoji">\uD83C\uDF89</div>';
   html += '<h2>Cardio voltooid!</h2>';
-  html += '<p style="color:var(--text-light);margin-bottom:20px">Lekker bezig!</p>';
+  html += '<p style="color:var(--text-light);margin-bottom:20px">Lekker bezig, Tim!</p>';
   html += '<div class="completion-stats">';
   html += '<div class="completion-stat"><span class="completion-stat-label">Training</span><span class="completion-stat-value">' + cardioTrainingName + '</span></div>';
   html += '<div class="completion-stat"><span class="completion-stat-label">Totale duur</span><span class="completion-stat-value">' + totalMin + ' min</span></div>';
@@ -1459,8 +1496,8 @@ function stopCardioTimer() {
 // ================================================================
 function renderWeekSummary() {
   var now = new Date();
-  // Only show on Monday (day 1)
-  if (now.getDay() !== 1) return '';
+  // Show on Monday and Tuesday (days 1-2)
+  if (now.getDay() !== 1 && now.getDay() !== 2) return '';
 
   var sessions = getStore('sessions', []);
   if (sessions.length === 0) return '';
@@ -1652,7 +1689,8 @@ function renderToday() {
   var schedule = getSchedule(weekType);
   var todayKey = getTodayKey();
 
-  document.getElementById('weekBadge').textContent = 'Week ' + weekType;
+  // Tim gebruikt geen Week A/B rotatie — badge verbergen
+  document.getElementById('weekBadge').style.display = 'none';
   document.getElementById('topbarDate').textContent = formatDateNL(now);
 
   var daysSince = daysSinceLastTraining();
@@ -1699,7 +1737,7 @@ function renderRestDay(container, dayOfWeek, motivHtml) {
   // Compacte actieknoppen
   html += '<div style="display:flex;gap:8px;margin:8px 16px">';
   html += '<button class="start-btn-primary" onclick="startLoopbandWandelen()" style="flex:1;margin:0;padding:10px;font-size:13px">\uD83D\uDEB6 Loopband wandelen</button>';
-  html += '<button class="start-btn-primary" onclick="toggleStretchRoutineCompact()" style="flex:1;margin:0;padding:10px;font-size:13px;background:var(--text-light)">\uD83E\uDDD8 Stretchen</button>';
+  html += '<button class="start-btn-primary" onclick="startStretchTimer()" style="flex:1;margin:0;padding:10px;font-size:13px;background:var(--success);color:#fff">\uD83E\uDDD8 Start stretch timer</button>';
   html += '</div>';
 
   // Anterior Pelvic Tilt routine on rest days
@@ -1722,8 +1760,8 @@ function renderRestDay(container, dayOfWeek, motivHtml) {
   html += '</div>';
   html += '</div>';
 
-  // Stretch routine (verborgen, wordt getoond via knop)
-  html += '<div id="stretchRoutineCompact" style="display:none;margin:8px 16px">';
+  // Stretch routine (direct zichtbaar op rustdagen)
+  html += '<div id="stretchRoutineCompact" style="margin:8px 16px">';
   html += '<div class="card" style="margin:0">';
   STRETCH_ROUTINES.forEach(function(s, idx) {
     html += '<div style="padding:8px 12px;border-top:' + (idx === 0 ? 'none' : '1px solid var(--border)') + ';display:flex;align-items:center;gap:8px">';
@@ -1912,10 +1950,50 @@ function renderCardioOverview(container, training, trainingKey, motivHtml) {
 
   html += '</div>';
 
+  // Handmatig afvinken (bv. buiten gewandeld/gelopen)
+  html += '<div style="text-align:center;margin:8px 16px">';
+  html += '<button class="tm-btn tm-btn-outline tm-btn-small" onclick="logManualCardio(\'' + trainingKey + '\')" style="font-size:12px;color:var(--text-light)">\u2705 Al buiten gewandeld/gelopen? Handmatig afvinken</button>';
+  html += '</div>';
+
   // Vandaag anders? section
   html += renderVandaagAnders(trainingKey);
 
   container.innerHTML = html;
+}
+
+function logManualCardio(trainingKey) {
+  var training = TRAINING_DATA[trainingKey];
+  if (!training) return;
+  var todayKey = getTodayKey();
+  var sessions = getStore('sessions', []);
+  var existingIdx = -1;
+  sessions.forEach(function(s, i) { if (s.date === todayKey) existingIdx = i; });
+
+  var sessionData = {
+    date: todayKey,
+    type: 'cardio',
+    name: training.name + ' (handmatig)',
+    duration: 0,
+    completedAt: new Date().toISOString(),
+    feedback: null
+  };
+
+  if (existingIdx >= 0) {
+    if (!confirm('Je hebt vandaag al een sessie gelogd. Wil je deze overschrijven?')) return;
+    sessions[existingIdx] = sessionData;
+  } else {
+    sessions.push(sessionData);
+  }
+  setStore('sessions', sessions);
+
+  // Show quick completion
+  var content = document.getElementById('todayContent');
+  var html = '<div class="card" style="text-align:center;padding:32px 24px;margin:16px">';
+  html += '<div style="font-size:48px;margin-bottom:12px">\u2705</div>';
+  html += '<h2 style="margin:0 0 8px">Afgevinkt!</h2>';
+  html += '<p style="color:var(--text-light);font-size:14px;margin:0">Je sessie is opgeslagen. Lekker bezig, Tim!</p>';
+  html += '</div>';
+  content.innerHTML = html;
 }
 
 function toggleOtherCardio(el) {
@@ -1927,10 +2005,6 @@ function toggleOtherCardio(el) {
     panel.style.display = 'none';
     el.textContent = 'Andere opties \u25BC';
   }
-}
-
-function toggleKuitTips(el) {
-  // Unused for Tim, kept for compatibility
 }
 
 function toggleMeetAdvies(btn) {
@@ -2130,7 +2204,7 @@ function openVrijeTraining() {
   var options = [
     { key: 'krachtBoven', name: 'Kracht: bovenlichaam', desc: 'Chest press, shoulder press, dumbbell row, plank' },
     { key: 'krachtOnder', name: 'Kracht: onderlichaam', desc: 'Leg curl, leg extension, chest press, plank' },
-    { key: 'loopbandWandelen', name: 'Loopband wandelen (35 min)', desc: 'Rustig wandelen op de loopband' },
+    { key: 'loopband', name: 'Loopband wandelen (35 min)', desc: 'Rustig wandelen op de loopband' },
     { key: 'cardioVariatie', name: 'Cardio variatie (40\u201345 min)', desc: 'Crosstrainer, loopband of recumbent bike' },
     { key: 'cardioLicht', name: 'Lichte cardio (30 min)', desc: 'Loopband, crosstrainer of hometrainer' },
   ];
