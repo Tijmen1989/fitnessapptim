@@ -2,6 +2,41 @@
 // APP VERSION
 // ================================================================
 var APP_VERSION = '1.0.0';
+// ================================================================
+// TIMER SOUND (Web Audio API — geen extern bestand nodig)
+// ================================================================
+var _audioCtx = null;
+function playTimerSound(type) {
+  try {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var ctx = _audioCtx;
+    var now = ctx.currentTime;
+    if (type === 'short') {
+      // Kort blip (rust-timer, stretch)
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc.start(now); osc.stop(now + 0.3);
+    } else {
+      // Dubbele toon (warmup, cooldown, plank, cardio)
+      [0, 0.25].forEach(function(delay) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = delay === 0 ? 660 : 880;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.25, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.25);
+        osc.start(now + delay); osc.stop(now + delay + 0.25);
+      });
+    }
+  } catch(e) { /* AudioContext not supported */ }
+}
+
 
 // ================================================================
 // STORAGE HELPERS
@@ -11,10 +46,24 @@ function getStore(key, def) {
   catch(e) { return def; }
 }
 function setStore(key, val) {
-  localStorage.setItem('tim_' + key, JSON.stringify(val));
+  try {
+    localStorage.setItem('tim_' + key, JSON.stringify(val));
+  } catch(e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      console.warn('localStorage vol! Probeer oude sessies op te ruimen.');
+      // Probeer ruimte te maken door sessies ouder dan 6 maanden te archiveren
+      try {
+        var sessions = JSON.parse(localStorage.getItem('tim_sessions') || '[]');
+        if (sessions.length > 100) {
+          localStorage.setItem('tim_sessions', JSON.stringify(sessions.slice(-100)));
+          localStorage.setItem('tim_' + key, JSON.stringify(val));
+        }
+      } catch(e2) { /* kan niet opslaan */ }
+    }
+  }
   // Cloud sync: stuur belangrijke data automatisch naar Firebase
   if (typeof saveToCloud === 'function') {
-    var cloudKeys = ['sessions', 'measurements', 'onboardingDone', 'darkMode', 'startDate', 'weekType', 'weightGoal', 'weekBEnabled', 'phaseOverride', 'remindersEnabled', 'weightSteps'];
+    var cloudKeys = ['sessions', 'measurements', 'onboardingDone', 'darkMode', 'startDate', 'weekType', 'weightGoal', 'weekBEnabled', 'phaseOverride', 'remindersEnabled', 'weightSteps', 'startWeights', 'availableWeights'];
     if (cloudKeys.indexOf(key) !== -1) {
       saveToCloud('tim_' + key, val);
     }
@@ -287,6 +336,25 @@ function getLastWeight(exerciseId) {
   return hist.length > 0 ? hist[0].weight : 0;
 }
 
+function isDumbbell(exerciseId) {
+  var ex = getExercise(exerciseId);
+  return ex && ex.apparaat && ex.apparaat.indexOf('Dumbbell') >= 0;
+}
+
+var DEFAULT_DUMBBELL_WEIGHTS = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20, 22.5, 25, 27.5, 30];
+
+function getAvailableWeights(exerciseId) {
+  var custom = getStore('availableWeights', {});
+  if (custom[exerciseId] && custom[exerciseId].length > 0) return custom[exerciseId];
+  return DEFAULT_DUMBBELL_WEIGHTS;
+}
+
+function setAvailableWeights(exerciseId, weights) {
+  var custom = getStore('availableWeights', {});
+  custom[exerciseId] = weights.sort(function(a, b) { return a - b; });
+  setStore('availableWeights', custom);
+}
+
 function getWeightStep(exerciseId) {
   var custom = getStore('weightSteps', {});
   if (custom[exerciseId]) {
@@ -296,7 +364,7 @@ function getWeightStep(exerciseId) {
   }
   var ex = getExercise(exerciseId);
   if (!ex) return 2.5;
-  if (ex.apparaat && ex.apparaat.indexOf('Dumbbell') >= 0) return 2;
+  if (isDumbbell(exerciseId)) return 2;
   return 2.5;
 }
 
@@ -322,6 +390,61 @@ function setWeightUnit(exerciseId, unit, el) {
   if (el) { el.style.borderColor = 'var(--success)'; setTimeout(function() { el.style.borderColor = ''; }, 800); }
 }
 
+function getStartWeight(exerciseId) {
+  var custom = getStore('startWeights', {});
+  if (custom[exerciseId] !== undefined) return custom[exerciseId];
+  var ex = getExercise(exerciseId);
+  var raw = (ex && ex.defaultWeight) ? ex.defaultWeight : 0;
+  if (isDumbbell(exerciseId) && raw > 0) {
+    // Snap naar dichtstbijzijnde beschikbaar gewicht
+    var avail = getAvailableWeights(exerciseId);
+    var closest = avail[0] || raw;
+    for (var i = 0; i < avail.length; i++) {
+      if (Math.abs(avail[i] - raw) < Math.abs(closest - raw)) closest = avail[i];
+    }
+    return closest;
+  }
+  // Machine: rond af op veelvoud van stap
+  var step = getWeightStep(exerciseId);
+  if (step > 0 && raw > 0) {
+    raw = Math.round(raw / step) * step;
+    raw = parseFloat(raw.toFixed(2));
+  }
+  return raw;
+}
+
+function setStartWeight(exerciseId, weight, el) {
+  var custom = getStore('startWeights', {});
+  custom[exerciseId] = parseFloat(weight) || 0;
+  setStore('startWeights', custom);
+  if (el) { el.style.borderColor = 'var(--success)'; setTimeout(function() { el.style.borderColor = ''; }, 800); }
+}
+
+function toggleDumbbellWeight(weight, btn) {
+  // Alle dumbbell-oefeningen delen dezelfde beschikbare-gewichten-lijst
+  var allExIds = Object.keys(typeof EXERCISE_DB !== 'undefined' ? EXERCISE_DB : {});
+  var dbIds = allExIds.filter(function(id) { return isDumbbell(id); });
+  var refId = dbIds[0] || '';
+  var avail = getAvailableWeights(refId);
+  var idx = avail.indexOf(weight);
+  if (idx >= 0) {
+    avail.splice(idx, 1);
+    if (avail.length === 0) { avail = [weight]; } // Minimaal 1 gewicht behouden
+  } else {
+    avail.push(weight);
+  }
+  avail.sort(function(a, b) { return a - b; });
+  // Sla op voor alle dumbbell-oefeningen
+  dbIds.forEach(function(id) { setAvailableWeights(id, avail.slice()); });
+  // Toggle visueel
+  if (btn) {
+    var isNowOn = avail.indexOf(weight) >= 0;
+    btn.style.background = isNowOn ? 'var(--primary)' : 'var(--card)';
+    btn.style.color = isNowOn ? 'white' : 'var(--text-light)';
+    btn.style.borderColor = isNowOn ? 'var(--primary)' : 'var(--border)';
+  }
+}
+
 function parseRepRange(repsStr) {
   var str = (repsStr || '10').replace(/[^\d\u2013\-]/g, '');
   var parts = str.split(/[\u2013\-]/);
@@ -334,8 +457,40 @@ function getSmartWeightOptions(exerciseId, currentWeight, step) {
   var options = [];
   currentWeight = parseFloat(currentWeight) || 0;
 
+  // Dumbbell-oefeningen: gebruik beschikbare-gewichten-lijst
+  if (isDumbbell(exerciseId)) {
+    var available = getAvailableWeights(exerciseId);
+    if (currentWeight === 0) {
+      // Geen historie: toon de lichtste 6 gewichten
+      var show = available.slice(0, Math.min(6, available.length));
+      for (var i = 0; i < show.length; i++) {
+        options.push({ value: show[i], isSuggestion: false });
+      }
+      return options;
+    }
+    // Toon: 2 onder huidig, huidig, 1 boven (suggestie)
+    var idx = -1;
+    for (var j = 0; j < available.length; j++) {
+      if (available[j] >= currentWeight) { idx = j; break; }
+    }
+    if (idx === -1) idx = available.length - 1;
+    // Zorg dat currentWeight zelf erin zit, ook als het niet in de lijst staat
+    var shown = {};
+    var vals = [];
+    for (var k = Math.max(0, idx - 2); k <= Math.min(available.length - 1, idx + 1); k++) {
+      var isSug = available[k] > currentWeight;
+      vals.push({ value: available[k], isSuggestion: isSug });
+      shown[available[k]] = true;
+    }
+    if (!shown[currentWeight] && currentWeight > 0) {
+      vals.push({ value: currentWeight, isSuggestion: false });
+      vals.sort(function(a, b) { return a.value - b.value; });
+    }
+    return vals;
+  }
+
+  // Machine-oefeningen: gebruik stap-systeem
   if (currentWeight === 0) {
-    // No history yet — show common starting weights
     var starts = [5, 7.5, 10, 12.5, 15, 20];
     for (var si = 0; si < starts.length; si++) {
       options.push({ value: starts[si], isSuggestion: false });
@@ -343,19 +498,17 @@ function getSmartWeightOptions(exerciseId, currentWeight, step) {
     return options;
   }
 
-  // Show: 2 steps below, current, 1 step above (suggestion)
   var below2 = Math.max(0, currentWeight - step * 2);
   var below1 = Math.max(0, currentWeight - step);
   var above1 = currentWeight + step;
 
-  // Avoid duplicates and zero
-  var vals = [];
-  if (below2 > 0 && below2 !== below1) vals.push({ value: below2, isSuggestion: false });
-  if (below1 > 0 && below1 !== currentWeight) vals.push({ value: below1, isSuggestion: false });
-  vals.push({ value: currentWeight, isSuggestion: false });
-  vals.push({ value: above1, isSuggestion: true });
+  var vals2 = [];
+  if (below2 > 0 && below2 !== below1) vals2.push({ value: below2, isSuggestion: false });
+  if (below1 > 0 && below1 !== currentWeight) vals2.push({ value: below1, isSuggestion: false });
+  vals2.push({ value: currentWeight, isSuggestion: false });
+  vals2.push({ value: above1, isSuggestion: true });
 
-  return vals;
+  return vals2;
 }
 
 function selectWeight(value, btn) {
@@ -421,14 +574,14 @@ function getProgressionSuggestion(exerciseId) {
   }
   if (!lastSession) {
     // Eerste sessie: geef beginner advies
-    var ex = getExercise(exerciseId);
-    if (ex && ex.defaultWeight) {
+    var sw = getStartWeight(exerciseId);
+    if (sw > 0) {
       return {
         ready: false,
         current: 0,
-        suggested: ex.defaultWeight,
+        suggested: sw,
         targetReps: minReps,
-        message: '\uD83C\uDD95 Start met ' + ex.defaultWeight + ' ' + getWeightUnit(exerciseId) + ' \u00b7 ' + numSets + '\u00d7' + minReps
+        message: '\uD83C\uDD95 Start met ' + sw + ' ' + getWeightUnit(exerciseId) + ' \u00b7 ' + numSets + '\u00d7' + minReps
       };
     }
     return null;
@@ -570,7 +723,90 @@ function startTrainingMode(trainingKey) {
   renderTrainingStep();
 }
 
+function pauseTraining() {
+  // Sla de volledige training state op
+  var pauseData = {
+    trainingKey: currentTrainingKey,
+    exerciseIndex: currentExerciseIndex,
+    currentSet: currentSet,
+    sessionExerciseLog: sessionExerciseLog,
+    trainingStartTime: trainingStartTime,
+    trainingPhase: trainingPhase,
+    pausedAt: new Date().toISOString()
+  };
+  setStore('pausedTraining', pauseData);
+
+  // Sluit training mode zonder op te slaan
+  trainingModeActive = false;
+  clearInterval(tmTimerInterval);
+  releaseWakeLock();
+  document.getElementById('trainingMode').classList.remove('active');
+  document.getElementById('bottomNav').style.display = 'flex';
+  renderToday();
+}
+
+function hasPausedTraining() {
+  var paused = getStore('pausedTraining', null);
+  if (!paused) return false;
+  // Verlopen na 2 uur
+  var pausedTime = new Date(paused.pausedAt).getTime();
+  if (Date.now() - pausedTime > 2 * 60 * 60 * 1000) {
+    setStore('pausedTraining', null);
+    return false;
+  }
+  return true;
+}
+
+function renderResumeBanner() {
+  var paused = getStore('pausedTraining', null);
+  if (!paused) return '';
+  var training = TRAINING_DATA[paused.trainingKey];
+  if (!training) return '';
+  var doneCount = Object.keys(paused.sessionExerciseLog).length;
+  var totalCount = (getTrainingExercises(paused.trainingKey) || []).length;
+  var minAgo = Math.round((Date.now() - new Date(paused.pausedAt).getTime()) / 60000);
+  var timeText = minAgo < 1 ? 'zojuist' : minAgo + ' min geleden';
+  return '<div class="resume-banner" onclick="resumeTraining()">' +
+    '<div style="font-size:28px">\u25B6\uFE0F</div>' +
+    '<div style="flex:1">' +
+    '<div style="font-weight:700;font-size:15px">Training hervatten</div>' +
+    '<div style="font-size:13px;opacity:0.9">' + training.name + ' \u2014 ' + doneCount + '/' + totalCount + ' oefeningen \u2014 gepauzeerd ' + timeText + '</div>' +
+    '</div></div>';
+}
+
+function resumeTraining() {
+  var paused = getStore('pausedTraining', null);
+  if (!paused) return;
+  setStore('pausedTraining', null);
+
+  // Herstel state
+  currentTraining = TRAINING_DATA[paused.trainingKey];
+  currentTrainingKey = paused.trainingKey;
+  if (!currentTraining) return;
+
+  currentExerciseIds = getTrainingExercises(paused.trainingKey);
+  trainingModeActive = true;
+  currentExerciseIndex = paused.exerciseIndex;
+  currentSet = paused.currentSet;
+  sessionExerciseLog = paused.sessionExerciseLog || {};
+  trainingStartTime = paused.trainingStartTime;
+  trainingPhase = paused.trainingPhase || 'exercises';
+  tmState = 'idle';
+
+  requestWakeLock();
+  document.getElementById('trainingMode').classList.add('active');
+  document.getElementById('bottomNav').style.display = 'none';
+  renderTrainingStep();
+}
+
+function discardPausedTraining() {
+  setStore('pausedTraining', null);
+  renderToday();
+}
+
 function confirmExitTraining() {
+  // Verwijder eventuele pauze-data als we echt stoppen
+  setStore('pausedTraining', null);
   var hasData = Object.keys(sessionExerciseLog).length > 0;
   if (hasData) {
     if (confirm('Wil je de ' + Object.keys(sessionExerciseLog).length + ' oefeningen die je al gedaan hebt opslaan?')) {
@@ -663,29 +899,35 @@ function renderTrainingStep() {
     var defaultWeight = (sessionExerciseLog[logKey] && sessionExerciseLog[logKey].weight) || suggestedWeight || prevWeight || 0;
     var defaultReps = (sessionExerciseLog[logKey] && sessionExerciseLog[logKey].reps) || suggestedReps || ex.defaultReps || 8;
     var step = getWeightStep(exId);
-    var weightOptions = getSmartWeightOptions(exId, defaultWeight, step);
     var repRange = parseRepRange(ex.reps);
 
-    // Weight picker
-    html += '<div style="margin-bottom:16px;width:100%;max-width:340px">';
-    html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:6px;text-align:center">Gewicht (' + unit + ')</div>';
-    html += '<div id="tmWeightPicker" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">';
-    for (var wi = 0; wi < weightOptions.length; wi++) {
-      var wo = weightOptions[wi];
-      var isSelected = wo.value === defaultWeight;
-      var isSuggestion = wo.isSuggestion;
-      var btnStyle = isSelected
-        ? 'background:var(--primary);color:white;border-color:var(--primary)'
-        : isSuggestion
-          ? 'background:var(--hint-bg);color:var(--success-text);border-color:var(--success);border-style:dashed'
-          : 'background:var(--card);color:var(--text);border-color:var(--border)';
-      html += '<button onclick="selectWeight(' + wo.value + ',this)" data-weight="' + wo.value + '" ';
-      html += 'style="min-width:52px;padding:10px 6px;border:2px solid;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;' + btnStyle + '">';
-      html += wo.value + '</button>';
+    // Weight picker (alleen voor oefeningen met gewicht, niet voor bodyweight)
+    if (!ex.isBodyweight) {
+      var weightOptions = getSmartWeightOptions(exId, defaultWeight, step);
+      html += '<div style="margin-bottom:16px;width:100%;max-width:340px">';
+      html += '<div style="font-size:12px;color:var(--text-light);margin-bottom:6px;text-align:center">Gewicht (' + unit + ')</div>';
+      html += '<div id="tmWeightPicker" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">';
+      for (var wi = 0; wi < weightOptions.length; wi++) {
+        var wo = weightOptions[wi];
+        var isSelected = wo.value === defaultWeight;
+        var isSuggestion = wo.isSuggestion;
+        var btnStyle = isSelected
+          ? 'background:var(--primary);color:white;border-color:var(--primary)'
+          : isSuggestion
+            ? 'background:var(--hint-bg);color:var(--success-text);border-color:var(--success);border-style:dashed'
+            : 'background:var(--card);color:var(--text);border-color:var(--border)';
+        html += '<button onclick="selectWeight(' + wo.value + ',this)" data-weight="' + wo.value + '" ';
+        html += 'style="min-width:52px;padding:10px 6px;border:2px solid;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;' + btnStyle + '">';
+        html += wo.value + '</button>';
+      }
+      html += '</div>';
+      html += '<input type="hidden" id="tmWeight" value="' + defaultWeight + '">';
+      html += '</div>';
+    } else {
+      // Bodyweight: geen gewicht, wel tonen dat het lichaamsgewicht is
+      html += '<div style="margin-bottom:12px;font-size:13px;color:var(--text-light);text-align:center">Lichaamsgewicht \u2014 geen gewicht nodig</div>';
+      html += '<input type="hidden" id="tmWeight" value="0">';
     }
-    html += '</div>';
-    html += '<input type="hidden" id="tmWeight" value="' + defaultWeight + '">';
-    html += '</div>';
 
     // Reps picker
     html += '<div style="margin-bottom:20px;width:100%;max-width:340px">';
@@ -735,7 +977,12 @@ function renderTrainingStep() {
   if (!ex.isPlank || tmState !== 'plank-timer') {
     html += '<button class="tm-btn tm-btn-success" onclick="completeSet()">Set voltooid \u2714</button>';
   }
-  html += '<button class="tm-btn tm-btn-outline tm-btn-small" onclick="skipExercise()">Overslaan</button>';
+  html += '<div style="display:flex;gap:8px;justify-content:center;margin-top:4px">';
+  if (currentExerciseIndex > 0 || currentSet > 1) {
+    html += '<button class="tm-btn tm-btn-outline tm-btn-small" onclick="goStepBack()" style="flex:1;max-width:150px">\u25C0 Vorige</button>';
+  }
+  html += '<button class="tm-btn tm-btn-outline tm-btn-small" onclick="skipExercise()" style="flex:1;max-width:150px">Overslaan \u25B6</button>';
+  html += '</div>';
 
   body.innerHTML = html;
   document.getElementById('tmHeader').querySelector('h2').textContent = currentTraining.name;
@@ -795,6 +1042,7 @@ function startWarmupTimer(minutes) {
     if (tmTimerSeconds <= 0) {
       clearInterval(tmTimerInterval);
       if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+      playTimerSound('double');
       finishWarmup();
     }
   }, 1000);
@@ -827,19 +1075,19 @@ function renderCooldownScreen() {
   html += '<div class="tm-exercise-name">Cooldown</div>';
   html += '<div style="color:var(--text-light);font-size:15px;margin:8px 0 4px;line-height:1.5">' + (cooldown || '5 min rustig stretchen') + '</div>';
 
-  // Show concrete stretch exercises
+  // Show concrete stretch exercises with instructions visible
   if (stretchIds.length > 0) {
     html += '<div style="text-align:left;margin:12px 0;background:var(--bg);border-radius:12px;padding:4px 0">';
     stretchIds.forEach(function(sid, idx) {
       var s = getStretchById(sid);
       if (!s) return;
       html += '<div style="padding:10px 14px;border-top:' + (idx === 0 ? 'none' : '1px solid var(--border)') + '">';
-      html += '<div style="display:flex;align-items:center;gap:8px">';
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
       html += '<span style="font-size:12px;font-weight:700;color:var(--primary);min-width:18px">' + (idx + 1) + '</span>';
       html += '<div style="flex:1"><div style="font-size:14px;font-weight:600">' + s.name + ' <span style="font-weight:400;color:var(--text-light);font-size:12px">' + s.duur + 's' + (s.perKant ? '/kant' : '') + '</span></div></div>';
-      html += '<button onclick="toggleCooldownStretchDetail(\'' + sid + '\')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--primary);cursor:pointer">?</button>';
       html += '</div>';
-      html += '<div id="cooldown-stretch-' + sid + '" style="display:none;margin-top:6px;padding:4px 0 0 26px">';
+      html += '<div style="padding:0 0 0 26px">';
+      if (s.videoUrl) html += '<video src="' + s.videoUrl + '" autoplay loop muted playsinline style="width:100%;max-width:180px;border-radius:8px;margin-bottom:6px"></video>';
       html += '<p style="font-size:12px;color:var(--text-light);line-height:1.5;margin:0">' + s.instruction + '</p>';
       if (s.focus) html += '<p style="font-size:12px;color:var(--success);line-height:1.4;margin:4px 0 0">\u2714\uFE0F ' + s.focus + '</p>';
       html += '</div></div>';
@@ -863,10 +1111,7 @@ function renderCooldownScreen() {
   document.getElementById('tmHeader').querySelector('h2').textContent = 'Cooldown';
 }
 
-function toggleCooldownStretchDetail(sid) {
-  var el = document.getElementById('cooldown-stretch-' + sid);
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-}
+
 
 function startCooldownTimer() {
   tmState = 'cooldown-timer';
@@ -880,6 +1125,7 @@ function startCooldownTimer() {
     if (tmTimerSeconds <= 0) {
       clearInterval(tmTimerInterval);
       if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+      playTimerSound('double');
       finishCooldown();
     }
   }, 1000);
@@ -911,6 +1157,7 @@ function startPlankTimer(seconds) {
     if (tmTimerSeconds <= 0) {
       clearInterval(tmTimerInterval);
       if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+      playTimerSound('double');
       tmState = 'idle';
       completeSet();
     }
@@ -955,6 +1202,7 @@ function renderRestScreen(ex) {
   html += '<button class="tm-btn tm-btn-accent" style="max-width:150px" onclick="skipRest()">Klaar, door!</button>';
   html += '<button class="tm-btn tm-btn-outline" style="max-width:150px" onclick="addRestTime(30)">+30 sec</button>';
   html += '</div>';
+  html += '<button class="tm-btn tm-btn-outline tm-btn-small" onclick="goStepBack()" style="margin-top:12px;opacity:0.7">\u25C0 Vorige stap (undo)</button>';
 
   body.innerHTML = html;
 }
@@ -987,6 +1235,7 @@ function startRestTimer() {
     if (tmTimerSeconds <= 0) {
       clearInterval(tmTimerInterval);
       if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      playTimerSound('short');
       skipRest();
     }
   }, 1000);
@@ -1012,6 +1261,46 @@ function addRestTime(secs) {
   tmTimerSeconds += secs;
   var display = document.getElementById('tmTimerDisplay');
   if (display) display.textContent = formatTimer(tmTimerSeconds);
+}
+
+function goStepBack() {
+  clearInterval(tmTimerInterval);
+  tmState = 'idle';
+
+  if (trainingPhase === 'cooldown') {
+    // Terug van cooldown naar laatste oefening, laatste set
+    trainingPhase = 'exercises';
+    var ids = currentExerciseIds.length > 0 ? currentExerciseIds : currentTraining.exerciseIds;
+    currentExerciseIndex = ids.length - 1;
+    currentSet = totalSets;
+    // Verwijder log van die set
+    var ex = getCurrentExercise();
+    if (ex) delete sessionExerciseLog[ex.id + '_s' + currentSet];
+    renderTrainingStep();
+    return;
+  }
+
+  if (trainingPhase === 'exercises') {
+    if (currentSet > 1) {
+      // Terug naar vorige set van zelfde oefening
+      currentSet--;
+      var ex = getCurrentExercise();
+      if (ex) delete sessionExerciseLog[ex.id + '_s' + (currentSet + 1)];
+    } else if (currentExerciseIndex > 0) {
+      // Terug naar vorige oefening, laatste set
+      currentExerciseIndex--;
+      currentSet = totalSets;
+      var ex = getCurrentExercise();
+      if (ex) delete sessionExerciseLog[ex.id + '_s' + totalSets];
+    } else {
+      // Eerste oefening, eerste set → terug naar warmup
+      trainingPhase = 'warmup';
+    }
+    renderTrainingStep();
+    return;
+  }
+
+  // Vanuit warmup: niets om terug te gaan
 }
 
 function skipExercise() {
@@ -1193,9 +1482,11 @@ function saveFeedbackAndStartWandelen() {
 function saveFinalSession() {
   var todayKey = getTodayKey();
   var sessions = getStore('sessions', []);
-  // Update existing session for today or create new one
+  // Update existing session for today with same trainingKey, or create new one
   var existingIdx = -1;
-  sessions.forEach(function(s, i) { if (s.date === todayKey) existingIdx = i; });
+  sessions.forEach(function(s, i) {
+    if (s.date === todayKey && s.trainingKey === (currentTrainingKey || '')) existingIdx = i;
+  });
 
   var exerciseMap = {};
   Object.keys(sessionExerciseLog).forEach(function(key) {
@@ -1386,6 +1677,7 @@ function startCardioCountdown() {
         }
         // Vibrate on switch
         if (navigator.vibrate) navigator.vibrate(cardioIntervalMode === 'fast' ? [300, 100, 300] : [150]);
+        playTimerSound('short');
         renderCardioTimerStep();
         return;
       }
@@ -1398,6 +1690,7 @@ function startCardioCountdown() {
     // Phase ended
     if (cardioPhaseSeconds <= 0) {
       if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      playTimerSound('short');
       advanceCardioPhase();
     }
   }, 1000);
@@ -1657,7 +1950,14 @@ function skipTrainingToday() {
     return s.date === today && s.type === 'skip';
   });
   if (alreadySkipped) {
-    alert('Je hebt vandaag al overgeslagen');
+    var c = document.getElementById('todayContent');
+    if (c) {
+      var msg = document.createElement('div');
+      msg.style.cssText = 'padding:12px 16px;background:var(--warning-bg);color:var(--text);border-radius:10px;margin:12px 16px;font-size:14px;text-align:center';
+      msg.textContent = 'Je hebt vandaag al overgeslagen';
+      c.prepend(msg);
+      setTimeout(function() { msg.remove(); }, 3000);
+    }
     return;
   }
 
@@ -1702,7 +2002,11 @@ function renderToday() {
   var trainingKey = schedule[dayOfWeek];
 
   // Build motivation strip + weekly summary
-  var motivHtml = renderWeekSummary() + renderMotivationStrip();
+  var motivHtml = '';
+  if (hasPausedTraining()) {
+    motivHtml += renderResumeBanner();
+  }
+  motivHtml += renderWeekSummary() + renderMotivationStrip();
 
   if (!trainingKey) {
     renderRestDay(content, dayOfWeek, motivHtml);
@@ -1847,7 +2151,29 @@ function renderKrachtOverview(container, training, trainingKey, todayKey, motivH
 
   // Cooldown
   html += '<div class="phase-block"><div class="phase-icon">\u2744\uFE0F</div>';
-  html += '<div class="phase-text"><strong>Cooldown:</strong> ' + training.cooldown + '</div></div>';
+  html += '<div class="phase-text"><strong>Cooldown:</strong> ' + training.cooldown;
+  if (training.cooldownStretches && training.cooldownStretches.length > 0) {
+    html += '<div style="margin-top:8px">';
+    training.cooldownStretches.forEach(function(sid, idx) {
+      var s = getStretchById(sid);
+      if (!s) return;
+      html += '<div style="font-size:13px;color:var(--text);padding:6px 0;border-top:' + (idx === 0 ? 'none' : '1px solid var(--border)') + '">';
+      html += '<div style="display:flex;align-items:center;gap:6px">';
+      html += '<span style="font-weight:700;color:var(--primary);min-width:18px">' + (idx + 1) + '.</span>';
+      html += '<span style="flex:1">' + s.name + ' <span style="color:var(--text-light)">(' + s.duur + 's' + (s.perKant ? '/kant' : '') + ')</span></span>';
+      html += '<span style="cursor:pointer;font-size:16px" onclick="toggleOverviewInstruction(\'stretch-' + sid + '\')">\u2139\uFE0F</span>';
+      html += '</div>';
+      html += '<div class="ex-extra" id="overview-instr-stretch-' + sid + '">';
+      html += '<div style="padding:8px 0 4px 24px">';
+      if (s.videoUrl) html += '<video src="' + s.videoUrl + '" autoplay loop muted playsinline style="width:100%;max-width:200px;border-radius:8px;margin-bottom:6px"></video>';
+      html += '<p style="font-size:12px;color:var(--text-light);line-height:1.5;margin:0">' + s.instruction + '</p>';
+      if (s.focus) html += '<p style="font-size:12px;color:var(--success);line-height:1.4;margin:4px 0 0">\u2714\uFE0F ' + s.focus + '</p>';
+      html += '</div></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div></div>';
   html += '</div>';
 
   // Ease-back hint
@@ -2141,6 +2467,7 @@ function startStretchCountdown(seconds) {
     if (remaining <= 0) {
       clearInterval(stretchTimerInterval);
       if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
+      playTimerSound('short');
       advanceStretchStep();
     }
   }, 1000);
@@ -2672,11 +2999,28 @@ function renderHistory() {
           s.exercises.forEach(function(ex, exIdx) {
             var exData = getExercise(ex.id);
             var exName = exData ? exData.name : ex.id;
-            html += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">';
-            html += '<span style="flex:1;color:var(--text)">' + exName + '</span>';
             var exUnit = getWeightUnit(ex.id);
             var exStep = getWeightStep(ex.id);
-            html += '<input type="number" step="' + exStep + '" value="' + (ex.weight || 0) + '" onchange="updateSessionWeight(' + sIdx + ',' + exIdx + ',this.value)" style="width:60px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center;background:var(--card);color:var(--text)"> ' + exUnit;
+            var isBw = exData && (exData.isPlank || exData.isBodyweight);
+            html += '<div style="padding:6px 0;border-bottom:1px solid var(--border)">';
+            html += '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">' + exName + '</div>';
+            if (ex.sets && ex.sets.length > 0) {
+              html += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+              ex.sets.forEach(function(set, setIdx) {
+                html += '<div style="display:inline-flex;align-items:center;gap:3px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:11px">';
+                html += '<span style="color:var(--text-light)">S' + (setIdx + 1) + ':</span>';
+                if (!isBw) {
+                  html += '<input type="number" step="' + exStep + '" value="' + (set.weight || 0) + '" onchange="updateSessionSetWeight(' + sIdx + ',' + exIdx + ',' + setIdx + ',this.value)" style="width:42px;padding:2px;border:1px solid var(--border);border-radius:4px;font-size:11px;text-align:center;background:var(--bg);color:var(--text)">' + exUnit + ' ';
+                }
+                html += '<input type="number" step="1" min="0" value="' + (set.reps || 0) + '" onchange="updateSessionSetReps(' + sIdx + ',' + exIdx + ',' + setIdx + ',this.value)" style="width:36px;padding:2px;border:1px solid var(--border);border-radius:4px;font-size:11px;text-align:center;background:var(--bg);color:var(--text)">' + (isBw ? '' : 'x');
+                html += '</div>';
+              });
+              html += '</div>';
+            } else if (!isBw) {
+              html += '<div style="font-size:12px;color:var(--text-light)">';
+              html += '<input type="number" step="' + exStep + '" value="' + (ex.weight || 0) + '" onchange="updateSessionWeight(' + sIdx + ',' + exIdx + ',this.value)" style="width:60px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;font-size:12px;text-align:center;background:var(--card);color:var(--text)"> ' + exUnit;
+              html += '</div>';
+            }
             html += '</div>';
           });
         }
@@ -2766,43 +3110,92 @@ function renderProfile() {
   html += '<div class="card">';
   html += '<div class="card-header"><span class="icon">\uD83D\uDCA1</span> Hoe kies je het juiste gewicht?</div>';
   html += '<div style="padding:14px 16px;font-size:13px;color:var(--text-light);line-height:1.6">';
-  html += '<p style="margin-bottom:8px"><strong style="color:var(--text)">Begin licht.</strong> Kies een gewicht waarmee je makkelijk 12 herhalingen kunt doen. Het voelt misschien te makkelijk \u2014 dat is prima.</p>';
-  html += '<p style="margin-bottom:8px"><strong style="color:var(--text)">De vuistregel:</strong> na je set moet je het gevoel hebben dat je nog 3\u20134 herhalingen had kunnen doen. Kun je dat niet? Dan is het te zwaar.</p>';
-  html += '<p style="margin-bottom:8px"><strong style="color:var(--text)">Typische startgewichten:</strong></p>';
-  html += '<p style="margin-bottom:4px">\u2022 Machine-oefeningen (chest press, leg ext): <strong style="color:var(--text)">10\u201320 kg</strong></p>';
-  html += '<p style="margin-bottom:4px">\u2022 Dumbbells (row, curl, pullover): <strong style="color:var(--text)">4\u20138 kg</strong></p>';
-  html += '<p style="margin-bottom:8px">\u2022 Goblet squat: <strong style="color:var(--text)">6\u201310 kg</strong></p>';
-  html += '<p><strong style="color:var(--text)">De app regelt de rest:</strong> als je 3\u00d712 haalt, zegt de app automatisch wanneer je gewicht mag verhogen.</p>';
+  html += '<p style="margin:0 0 12px"><strong style="color:var(--text)">Begin licht.</strong> Kies een gewicht waarmee je makkelijk 12 herhalingen kunt doen. Het voelt misschien te makkelijk \u2014 dat is prima.</p>';
+  html += '<p style="margin:0 0 12px"><strong style="color:var(--text)">De vuistregel:</strong> na je set moet je het gevoel hebben dat je nog 3\u20134 herhalingen had kunnen doen. Kun je dat niet? Dan is het te zwaar.</p>';
+  html += '<p style="margin:0 0 6px"><strong style="color:var(--text)">Typische startgewichten:</strong></p>';
+  html += '<p style="margin:0 0 4px;padding-left:6px">\u2022 Machine-oefeningen (chest press, leg ext): <strong style="color:var(--text)">10\u201320 kg</strong></p>';
+  html += '<p style="margin:0 0 4px;padding-left:6px">\u2022 Dumbbells (row, curl, pullover): <strong style="color:var(--text)">4\u20138 kg</strong></p>';
+  html += '<p style="margin:0 0 12px;padding-left:6px">\u2022 Goblet squat: <strong style="color:var(--text)">6\u201310 kg</strong></p>';
+  html += '<p style="margin:0"><strong style="color:var(--text)">De app regelt de rest:</strong> als je 3\u00d712 haalt, zegt de app automatisch wanneer je gewicht mag verhogen.</p>';
   html += '</div></div>';
 
   // ── GEWICHTSSTAPPEN PER OEFENING ──
-  html += '<div class="card">';
-  html += '<div class="card-header"><span class="icon">\uD83C\uDFCB\uFE0F</span> Gewichtsstappen</div>';
-  html += '<div style="padding:14px 16px">';
-  html += '<p style="font-size:13px;color:var(--text-light);margin-bottom:10px">Stel de gewichtsstap en eenheid per oefening in. Pas aan naar jouw sportschool.</p>';
   var phase = getCurrentPhase();
   var allExIds = Object.keys(typeof EXERCISE_DB !== 'undefined' ? EXERCISE_DB : {});
   var krachtExIds = allExIds.filter(function(id) {
     var e = getExercise(id);
-    if (!e || e.isPlank) return false;
-    // Alleen oefeningen van huidige fase tonen
+    if (!e || e.isPlank || e.isBodyweight) return false;
     if (e.phase && e.phase > phase) return false;
     return true;
   });
+
+  // Splits: machines vs dumbbells
+  var machineExIds = krachtExIds.filter(function(id) { return !isDumbbell(id); });
+  var dumbbellExIds = krachtExIds.filter(function(id) { return isDumbbell(id); });
+
+  // Machine gewichtsstappen
+  if (machineExIds.length > 0) {
+    html += '<div class="card">';
+    html += '<div class="card-header"><span class="icon">\uD83C\uDFCB\uFE0F</span> Gewichtsstappen (machines)</div>';
+    html += '<div style="padding:14px 16px">';
+    html += '<p style="font-size:13px;color:var(--text-light);margin-bottom:10px">Stel de gewichtsstap per machine in. Pas aan naar jouw sportschool.</p>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
+    machineExIds.forEach(function(exId) {
+      var ex = getExercise(exId);
+      if (!ex) return;
+      var step = getWeightStep(exId);
+      var unit = getWeightUnit(exId);
+      html += '<tr style="border-bottom:1px solid var(--border)">';
+      html += '<td style="padding:8px 0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + ex.name + '</td>';
+      html += '<td style="padding:8px 0;text-align:right;white-space:nowrap">';
+      html += '<input type="number" step="0.25" min="0.25" value="' + step + '" oninput="setWeightStep(\'' + exId + '\',this.value,this)" style="width:56px;padding:4px 6px;border:2px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--card);color:var(--text);transition:border-color 0.3s">';
+      html += ' <select onchange="setWeightUnit(\'' + exId + '\',this.value,this)" style="padding:4px 6px;border:2px solid var(--border);border-radius:6px;font-size:13px;background:var(--card);color:var(--text);transition:border-color 0.3s">';
+      html += '<option value="kg"' + (unit === 'kg' ? ' selected' : '') + '>kg</option>';
+      html += '<option value="lbs"' + (unit === 'lbs' ? ' selected' : '') + '>lbs</option>';
+      html += '</select>';
+      html += '</td></tr>';
+    });
+    html += '</table>';
+    html += '</div></div>';
+  }
+
+  // Dumbbell beschikbare gewichten
+  if (dumbbellExIds.length > 0) {
+    html += '<div class="card">';
+    html += '<div class="card-header"><span class="icon">\uD83D\uDCAA</span> Beschikbare dumbbells</div>';
+    html += '<div style="padding:14px 16px">';
+    html += '<p style="font-size:13px;color:var(--text-light);margin-bottom:10px">Vink aan welke dumbbell-gewichten beschikbaar zijn in je sportschool. Dit geldt voor alle dumbbell-oefeningen.</p>';
+    var refId = dumbbellExIds[0];
+    var avail = getAvailableWeights(refId);
+    var allDbWeights = [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20, 22.5, 25, 27.5, 30, 32.5, 35, 37.5, 40];
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+    allDbWeights.forEach(function(w) {
+      var checked = avail.indexOf(w) >= 0;
+      var style = checked
+        ? 'background:var(--primary);color:white;border-color:var(--primary)'
+        : 'background:var(--card);color:var(--text-light);border-color:var(--border)';
+      html += '<button onclick="toggleDumbbellWeight(' + w + ',this)" style="min-width:44px;padding:8px 6px;border:2px solid;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;' + style + '">' + w + '</button>';
+    });
+    html += '</div>';
+    html += '</div></div>';
+  }
+
+  // ── STARTGEWICHT PER OEFENING ──
+  html += '<div class="card">';
+  html += '<div class="card-header"><span class="icon">\uD83C\uDFAF</span> Startgewicht</div>';
+  html += '<div style="padding:14px 16px">';
+  html += '<p style="font-size:13px;color:var(--text-light);margin-bottom:10px">Het gewicht waarmee je start als je een oefening voor het eerst doet. Je kunt dit aanpassen als de standaardwaarde niet past.</p>';
   html += '<table style="width:100%;border-collapse:collapse;font-size:13px">';
   krachtExIds.forEach(function(exId) {
     var ex = getExercise(exId);
     if (!ex) return;
-    var step = getWeightStep(exId);
+    var sw = getStartWeight(exId);
     var unit = getWeightUnit(exId);
     html += '<tr style="border-bottom:1px solid var(--border)">';
     html += '<td style="padding:8px 0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + ex.name + '</td>';
     html += '<td style="padding:8px 0;text-align:right;white-space:nowrap">';
-    html += '<input type="number" step="0.25" min="0.25" value="' + step + '" oninput="setWeightStep(\'' + exId + '\',this.value,this)" style="width:56px;padding:4px 6px;border:2px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--card);color:var(--text);transition:border-color 0.3s">';
-    html += ' <select onchange="setWeightUnit(\'' + exId + '\',this.value,this)" style="padding:4px 6px;border:2px solid var(--border);border-radius:6px;font-size:13px;background:var(--card);color:var(--text);transition:border-color 0.3s">';
-    html += '<option value="kg"' + (unit === 'kg' ? ' selected' : '') + '>kg</option>';
-    html += '<option value="lbs"' + (unit === 'lbs' ? ' selected' : '') + '>lbs</option>';
-    html += '</select>';
+    html += '<input type="number" step="0.5" min="0" value="' + sw + '" oninput="setStartWeight(\'' + exId + '\',this.value,this)" style="width:56px;padding:4px 6px;border:2px solid var(--border);border-radius:6px;font-size:13px;text-align:center;background:var(--card);color:var(--text);transition:border-color 0.3s">';
+    html += ' <span style="color:var(--text-light);font-size:12px">' + unit + '</span>';
     html += '</td></tr>';
   });
   html += '</table>';
@@ -3885,12 +4278,33 @@ function updateSessionWeight(sessionIdx, exerciseIdx, newWeight) {
   var val = parseFloat(newWeight);
   if (isNaN(val) || val < 0) return;
   sessions[sessionIdx].exercises[exerciseIdx].weight = val;
-  // Also update sets if they exist
-  if (sessions[sessionIdx].exercises[exerciseIdx].sets) {
-    sessions[sessionIdx].exercises[exerciseIdx].sets.forEach(function(set) {
-      set.weight = val;
-    });
-  }
+  // Update summary only, sets stay intact
+  setStore('sessions', sessions);
+}
+
+function updateSessionSetWeight(sessionIdx, exerciseIdx, setIdx, newWeight) {
+  var sessions = getStore('sessions', []);
+  var ex = sessions[sessionIdx] && sessions[sessionIdx].exercises && sessions[sessionIdx].exercises[exerciseIdx];
+  if (!ex || !ex.sets || !ex.sets[setIdx]) return;
+  var val = parseFloat(newWeight);
+  if (isNaN(val) || val < 0) return;
+  ex.sets[setIdx].weight = val;
+  // Update summary to max
+  var maxW = Math.max.apply(null, ex.sets.map(function(s) { return s.weight || 0; }));
+  ex.weight = maxW;
+  setStore('sessions', sessions);
+}
+
+function updateSessionSetReps(sessionIdx, exerciseIdx, setIdx, newReps) {
+  var sessions = getStore('sessions', []);
+  var ex = sessions[sessionIdx] && sessions[sessionIdx].exercises && sessions[sessionIdx].exercises[exerciseIdx];
+  if (!ex || !ex.sets || !ex.sets[setIdx]) return;
+  var val = parseInt(newReps);
+  if (isNaN(val) || val < 0) return;
+  ex.sets[setIdx].reps = val;
+  // Update summary to max
+  var maxR = Math.max.apply(null, ex.sets.map(function(s) { return s.reps || 0; }));
+  ex.reps = maxR;
   setStore('sessions', sessions);
 }
 
@@ -4188,7 +4602,29 @@ function renderKrachtPreview(container, training, trainingKey) {
 
   // Cooldown
   html += '<div class="phase-block"><div class="phase-icon">\u2744\uFE0F</div>';
-  html += '<div class="phase-text"><strong>Cooldown:</strong> ' + training.cooldown + '</div></div>';
+  html += '<div class="phase-text"><strong>Cooldown:</strong> ' + training.cooldown;
+  if (training.cooldownStretches && training.cooldownStretches.length > 0) {
+    html += '<div style="margin-top:8px">';
+    training.cooldownStretches.forEach(function(sid, idx) {
+      var s = getStretchById(sid);
+      if (!s) return;
+      html += '<div style="font-size:13px;color:var(--text);padding:6px 0;border-top:' + (idx === 0 ? 'none' : '1px solid var(--border)') + '">';
+      html += '<div style="display:flex;align-items:center;gap:6px">';
+      html += '<span style="font-weight:700;color:var(--primary);min-width:18px">' + (idx + 1) + '.</span>';
+      html += '<span style="flex:1">' + s.name + ' <span style="color:var(--text-light)">(' + s.duur + 's' + (s.perKant ? '/kant' : '') + ')</span></span>';
+      html += '<span style="cursor:pointer;font-size:16px" onclick="togglePreviewInstruction(\'stretch-' + sid + '\')">\u2139\uFE0F</span>';
+      html += '</div>';
+      html += '<div class="ex-extra" id="preview-instr-stretch-' + sid + '">';
+      html += '<div style="padding:8px 0 4px 24px">';
+      if (s.videoUrl) html += '<video src="' + s.videoUrl + '" autoplay loop muted playsinline style="width:100%;max-width:200px;border-radius:8px;margin-bottom:6px"></video>';
+      html += '<p style="font-size:12px;color:var(--text-light);line-height:1.5;margin:0">' + s.instruction + '</p>';
+      if (s.focus) html += '<p style="font-size:12px;color:var(--success);line-height:1.4;margin:4px 0 0">\u2714\uFE0F ' + s.focus + '</p>';
+      html += '</div></div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div></div>';
   html += '</div>';
 
   container.innerHTML = html;

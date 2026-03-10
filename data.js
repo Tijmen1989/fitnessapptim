@@ -218,6 +218,7 @@ var EXERCISE_DB = {
     reps: '10\u201315',
     defaultReps: 10,
     rest: 45,
+    isBodyweight: true,
     tip: 'Knijp billen samen bovenaan, onderrug niet overmatig hollen',
     videoUrl: 'videos/glute-bridge.mp4',
     youtubeId: '8bbE64NuDTU',
@@ -263,6 +264,7 @@ var EXERCISE_DB = {
     reps: '8 per kant',
     defaultReps: 8,
     rest: 45,
+    isBodyweight: true,
     tip: 'Rechts + links = 1 herhaling. Onderrug blijft op de grond!',
     videoUrl: 'videos/dead-bug.mp4',
     youtubeId: 'x-BStnplCYg',
@@ -285,6 +287,7 @@ var EXERCISE_DB = {
     reps: '8 per kant',
     defaultReps: 8,
     rest: 45,
+    isBodyweight: true,
     tip: 'Rechts + links = 1 herhaling. Rug stil houden!',
     videoUrl: 'videos/bird-dog.mp4',
     youtubeId: 'vtwhC3tfVow',
@@ -307,6 +310,7 @@ var EXERCISE_DB = {
     reps: '10',
     defaultReps: 10,
     rest: 30,
+    isBodyweight: true,
     tip: 'Langzaam wisselen, niet forceren',
     videoUrl: '',
     youtubeId: '2of247Kt0tU',
@@ -329,6 +333,7 @@ var EXERCISE_DB = {
     reps: '5 per richting',
     defaultReps: 5,
     rest: 30,
+    isBodyweight: true,
     tip: 'Nooit forceren. Stoppen bij pijn.',
     videoUrl: '',
     youtubeId: '',
@@ -350,6 +355,7 @@ var EXERCISE_DB = {
     reps: '10',
     defaultReps: 10,
     rest: 30,
+    isBodyweight: true,
     tip: 'Ontspannen bewegen, niet forceren',
     videoUrl: '',
     youtubeId: '',
@@ -525,7 +531,7 @@ var STRETCH_ROUTINES = [
     duur: 30,
     perKant: true,
     instruction: 'Ga in een grote uitvalspas staan (achterste knie op de grond). Duw je heupen naar voren tot je een rek voelt aan de voorkant van je heup. Houd 30 seconden, wissel dan.',
-    videoUrl: '',
+    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-hip-flexor-stretch-kneeling-lunge-3-front.mp4',
     focus: 'Corrigeert anterior pelvic tilt. Heupen recht naar voren duwen.'
   },
   {
@@ -561,7 +567,7 @@ var STRETCH_ROUTINES = [
     duur: 30,
     perKant: false,
     instruction: 'Op handen en knie\u00ebn, duw je billen naar je hielen, armen gestrekt naar voren. Laat je borst zakken richting de grond. Houd 30 seconden.',
-    videoUrl: '',
+    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-child-pose-arms-extended-front.mp4',
     focus: 'Ontspan je rug volledig. Adem diep in en uit.'
   },
   {
@@ -570,7 +576,7 @@ var STRETCH_ROUTINES = [
     duur: 30,
     perKant: true,
     instruction: 'Ga op je rug liggen. Leg je rechterenkel op je linkerknie. Trek je linkerbeen naar je borst. Je voelt een rek in je rechterbil. Houd 30 seconden, wissel.',
-    videoUrl: '',
+    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-supine-figure-4-stretch-front.mp4',
     focus: 'Ontspan schouders en nek, trek het been rustig naar je toe'
   }
 ];
