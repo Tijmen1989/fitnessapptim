@@ -2146,7 +2146,7 @@ function renderRestDay(container, dayOfWeek, motivHtml) {
   html += '<h2 style="margin:0 0 4px;font-size:18px">Rustdag</h2>';
   html += '<p style="margin:0 0 8px;font-size:13px">Licht bewegen of stretchen helpt je lichaam sneller herstellen.</p>';
   html += '<div style="text-align:left;padding:8px 12px;background:var(--hint-bg);border-radius:8px;font-size:12px;color:var(--text);line-height:1.4">';
-  html += '\uD83D\uDEB6 <strong>Beweegadvies:</strong> Probeer 30\u201345 min te wandelen (\u00b13.000\u20134.500 stappen). Goed voor herstel en vetverbranding.';
+  html += '\uD83D\uDEB6 <strong>Beweegadvies:</strong> Probeer 5.000\u20137.000 stappen te lopen vandaag. Goed voor herstel en stofwisseling.';
   html += '</div>';
   html += '</div></div>';
 

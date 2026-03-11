@@ -449,7 +449,7 @@ var PHASE_CONFIG = {
     unlockRequirement: null,
     krachtBoven: ['chest-press', 'shoulder-press', 'dumbbell-row', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
     krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'lower-back-ext', 'bird-dog', 'cat-cow'],
-    krachtFull: ['chest-press', 'dumbbell-row', 'leg-ext', 'plank', 'neck-mobility', 'shoulder-mobility']
+    krachtCompound: ['chest-press', 'dumbbell-row', 'goblet-squat', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
   },
   2: {
     name: 'Fase 2 \u2014 Uitbreiding',
@@ -457,7 +457,7 @@ var PHASE_CONFIG = {
     unlockRequirement: { sessions: 18, weeks: 6 },
     krachtBoven: ['chest-press', 'incline-press', 'shoulder-press', 'dumbbell-row', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
     krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'back-extension', 'lower-back-ext', 'bird-dog', 'cat-cow'],
-    krachtFull: ['chest-press', 'dumbbell-row', 'leg-ext', 'plank', 'neck-mobility', 'shoulder-mobility']
+    krachtCompound: ['chest-press', 'incline-press', 'dumbbell-row', 'goblet-squat', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
   }
 };
 
@@ -482,15 +482,15 @@ var TRAINING_DATA = {
     cooldownStretches: ['hamstrings', 'quads', 'glutes', 'hip-flexor'],
     exerciseIds: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'lower-back-ext', 'bird-dog', 'cat-cow']
   },
-  krachtFull: {
-    id: 'kracht-full',
-    name: 'Kracht: full body + mobiliteit',
-    description: 'Hele lichaam trainen: borst, rug, benen en core. Plus nek- en schoudermobiliteit.',
+  krachtCompound: {
+    id: 'kracht-compound',
+    name: 'Kracht: compound power',
+    description: 'Zware samengestelde oefeningen voor maximale spiergroei. Boven + onder in \u00e9\u00e9n sessie.',
     type: 'kracht',
     warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
     cooldown: '5 min rustig wandelen, daarna volledige stretchroutine:',
     cooldownStretches: ['hip-flexor', 'hamstrings', 'quads', 'chest-doorway', 'rug-stretch', 'glutes'],
-    exerciseIds: ['chest-press', 'dumbbell-row', 'leg-ext', 'plank', 'neck-mobility', 'shoulder-mobility']
+    exerciseIds: ['chest-press', 'dumbbell-row', 'goblet-squat', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
   },
   loopband: {
     id: 'loopband',
@@ -655,14 +655,15 @@ var STRETCH_ROUTINES = [
 ];
 
 function getSchedule(weekType) {
-  // Tim: 3x kracht (di-do-za) + loopband op ma-wo-vr, zondag rust
+  // Tim: 3x kracht (di-do-za), wo optioneel wandelen, rest = rust
+  // Focus: body recompositie (massa opbouwen + vetpercentage verlagen)
   return {
     0: null,             // Zondag: rust
-    1: 'loopband',       // Maandag: loopband
-    2: 'krachtBoven',    // Dinsdag: kracht boven
-    3: 'loopband',       // Woensdag: loopband
-    4: 'krachtOnder',    // Donderdag: kracht onder
-    5: 'loopband',       // Vrijdag: loopband
-    6: 'krachtFull'      // Zaterdag: full body
+    1: null,             // Maandag: rust
+    2: 'krachtBoven',    // Dinsdag: kracht bovenlichaam
+    3: null,             // Woensdag: rust (optioneel licht wandelen)
+    4: 'krachtOnder',    // Donderdag: kracht onderlichaam
+    5: null,             // Vrijdag: rust
+    6: 'krachtCompound'  // Zaterdag: compound/power
   };
 }
