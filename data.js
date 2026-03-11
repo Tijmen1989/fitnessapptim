@@ -197,7 +197,7 @@ var EXERCISE_DB = {
     defaultWeight: 8,
     rest: 60,
     tip: 'Rug recht, knie\u00ebn in lijn met tenen. Stop bij rugklachten.',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-dumbbell-goblet-squat-front.mp4',
+    videoUrl: 'videos/goblet-squat.mp4',
     youtubeId: 'MeIiIdhvXT4',
     instruction: {
       goal: 'Benen, billen en core trainen met \u00e9\u00e9n oefening.',
@@ -220,7 +220,7 @@ var EXERCISE_DB = {
     rest: 45,
     isBodyweight: true,
     tip: 'Knijp billen samen bovenaan, onderrug niet overmatig hollen',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-glute-bridge-front.mp4',
+    videoUrl: 'videos/glute-bridge.mp4',
     youtubeId: '8bbE64NuDTU',
     instruction: {
       goal: 'Bilspieren activeren en bekkenstand verbeteren. Corrigeert anterior pelvic tilt.',
@@ -378,7 +378,7 @@ var EXERCISE_DB = {
     rest: 45,
     isBodyweight: true,
     tip: 'Til armen en benen tegelijk op. Houd 2 sec vast bovenaan.',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-superman-front.mp4',
+    videoUrl: 'videos/superman.mp4',
     youtubeId: '',
     instruction: {
       goal: 'Onderrug (erector spinae) en houdingsspieren versterken. Helpt tegen rugklachten bij zitten.',
@@ -402,7 +402,7 @@ var EXERCISE_DB = {
     rest: 45,
     isBodyweight: true,
     tip: 'Armen gekruist voor je borst. Langzaam op en neer.',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-back-extension-side.mp4',
+    videoUrl: 'videos/back-extension.mp4',
     youtubeId: '',
     instruction: {
       goal: 'Onderrug en houdingsspieren versterken. Sterk alternatief voor superman met meer range of motion.',
@@ -578,7 +578,7 @@ var STRETCH_ROUTINES = [
     duur: 30,
     perKant: true,
     instruction: 'Ga in een grote uitvalspas staan (achterste knie op de grond). Duw je heupen naar voren tot je een rek voelt aan de voorkant van je heup. Houd 30 seconden, wissel dan.',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-hip-flexor-stretch-kneeling-lunge-3-front.mp4',
+    videoUrl: 'videos/hip-flexor.mp4',
     focus: 'Corrigeert anterior pelvic tilt. Heupen recht naar voren duwen.'
   },
   {
@@ -587,7 +587,7 @@ var STRETCH_ROUTINES = [
     duur: 30,
     perKant: true,
     instruction: 'Ga op je rug liggen. Strek \u00e9\u00e9n been omhoog. Trek het been voorzichtig naar je toe met je handen achter je knie. Houd 30 seconden, wissel dan.',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-hamstrings-stretch-variation-1-side.mp4',
+    videoUrl: 'videos/hamstrings.mp4',
     focus: 'Been gestrekt houden, niet forceren'
   },
   {
@@ -596,7 +596,7 @@ var STRETCH_ROUTINES = [
     duur: 30,
     perKant: true,
     instruction: 'Sta rechtop (houd je ergens aan vast). Pak je enkel en trek je hiel naar je billen. Knie wijst naar de grond. Houd 30 seconden, wissel dan.',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-quads-stretch-variation-1-side.mp4',
+    videoUrl: 'videos/quads.mp4',
     focus: 'Knie\u00ebn naast elkaar houden'
   },
   {
@@ -605,7 +605,7 @@ var STRETCH_ROUTINES = [
     duur: 30,
     perKant: true,
     instruction: 'Ga bij een muur staan. Plaats je arm in een 90-graden hoek tegen de muur. Leun naar voren tot je een rek voelt in je borst. Houd 30 seconden, wissel.',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-chest-stretch-variation-1-side.mp4',
+    videoUrl: 'videos/chest-doorway.mp4',
     focus: 'Niet te ver doorduwen, rustig ademen'
   },
   {
@@ -614,7 +614,7 @@ var STRETCH_ROUTINES = [
     duur: 30,
     perKant: false,
     instruction: 'Op handen en knie\u00ebn, duw je billen naar je hielen, armen gestrekt naar voren. Laat je borst zakken richting de grond. Houd 30 seconden.',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-child-pose-arms-extended-front.mp4',
+    videoUrl: 'videos/rug-stretch.mp4',
     focus: 'Ontspan je rug volledig. Adem diep in en uit.'
   },
   {
@@ -623,7 +623,7 @@ var STRETCH_ROUTINES = [
     duur: 30,
     perKant: true,
     instruction: 'Ga op je rug liggen. Leg je rechterenkel op je linkerknie. Trek je linkerbeen naar je borst. Je voelt een rek in je rechterbil. Houd 30 seconden, wissel.',
-    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-supine-figure-4-stretch-front.mp4',
+    videoUrl: 'videos/glutes.mp4',
     focus: 'Ontspan schouders en nek, trek het been rustig naar je toe'
   }
 ];
