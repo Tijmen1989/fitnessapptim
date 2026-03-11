@@ -1905,6 +1905,59 @@ function stopCardioTimer() {
 // ================================================================
 // TODAY PAGE RENDERING
 // ================================================================
+function renderProteinReminder() {
+  var todayKey = getTodayKey();
+  var proteinLog = getStore('proteinLog', {});
+  var checked = proteinLog[todayKey] || false;
+  // Bereken eiwit-doel: 1.8g per kg lichaamsgewicht
+  var measurements = getStore('measurements', []);
+  var bodyWeight = 70; // default
+  if (measurements.length > 0) bodyWeight = measurements[measurements.length - 1].weight || 70;
+  var proteinGoal = Math.round(bodyWeight * 1.8);
+
+  var html = '<div class="card" style="margin:8px 16px;padding:0">';
+  html += '<div style="display:flex;align-items:center;padding:12px 16px;gap:12px">';
+  html += '<div onclick="toggleProteinCheck()" style="width:32px;height:32px;border-radius:50%;border:2px solid ' + (checked ? 'var(--success)' : 'var(--border)') + ';background:' + (checked ? 'var(--success)' : 'transparent') + ';display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.2s">';
+  if (checked) html += '<span style="color:white;font-size:16px">\u2713</span>';
+  html += '</div>';
+  html += '<div style="flex:1">';
+  html += '<div style="font-size:14px;font-weight:600;color:' + (checked ? 'var(--success)' : 'var(--text)') + '">' + (checked ? 'Eiwit-doel gehaald!' : 'Eiwit vandaag') + '</div>';
+  html += '<div style="font-size:12px;color:var(--text-light);line-height:1.4">Doel: \u00b1' + proteinGoal + 'g eiwit (' + bodyWeight + ' kg \u00d7 1.8g)</div>';
+  html += '</div>';
+  if (!checked) {
+    html += '<div onclick="toggleProteinTips()" style="font-size:18px;cursor:pointer">\uD83D\uDCA1</div>';
+  }
+  html += '</div>';
+  // Tips panel (hidden)
+  html += '<div id="proteinTipsPanel" style="display:none;padding:0 16px 12px;font-size:12px;color:var(--text-light);line-height:1.6;border-top:1px solid var(--border)">';
+  html += '<div style="padding-top:10px"><strong>Voorbeelden voor \u00b1' + proteinGoal + 'g eiwit per dag:</strong></div>';
+  html += '<div style="margin-top:6px">\uD83E\uDD5A 3 eieren (18g) + \uD83C\uDF57 kipfilet 150g (46g) + \uD83E\uDD5B kwark 250g (23g) + \uD83E\uDDC0 2 boterhammen kaas (10g) = ~97g</div>';
+  html += '<div style="margin-top:4px">\uD83E\uDD64 Eiwitshake (25g) + \uD83C\uDF5D pasta bolognese (30g) + \uD83E\uDD5C handvol noten (8g) = +63g</div>';
+  html += '<div style="margin-top:6px;color:var(--primary)"><strong>Tip:</strong> Verdeel eiwit over 3-4 maaltijden. Je lichaam kan max ~40g per maaltijd goed verwerken.</div>';
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+function toggleProteinCheck() {
+  var todayKey = getTodayKey();
+  var proteinLog = getStore('proteinLog', {});
+  proteinLog[todayKey] = !proteinLog[todayKey];
+  // Ruim oude entries op (bewaar max 30 dagen)
+  var keys = Object.keys(proteinLog);
+  if (keys.length > 30) {
+    keys.sort();
+    keys.slice(0, keys.length - 30).forEach(function(k) { delete proteinLog[k]; });
+  }
+  setStore('proteinLog', proteinLog);
+  renderToday();
+}
+
+function toggleProteinTips() {
+  var panel = document.getElementById('proteinTipsPanel');
+  if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
 function renderWeekSummary() {
   var now = new Date();
   // Show on Monday and Tuesday (days 1-2)
@@ -2124,7 +2177,7 @@ function renderToday() {
   if (hasPausedTraining()) {
     motivHtml += renderResumeBanner();
   }
-  motivHtml += renderWeekSummary() + renderMotivationStrip();
+  motivHtml += renderWeekSummary() + renderProteinReminder() + renderMotivationStrip();
 
   if (!trainingKey) {
     renderRestDay(content, dayOfWeek, motivHtml);
