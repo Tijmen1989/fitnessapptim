@@ -276,8 +276,8 @@ var EXERCISE_DB = {
         'Kom terug en wissel: linkerarm + rechterbeen. Rechts + links = 1 herhaling.',
         'Houd je onderrug plat op de grond \u2014 dat is het belangrijkste.'
       ],
-      focus: 'Je onderrug mag NIET van de grond komen. Als dat wel gebeurt, maak de beweging kleiner.',
-      mistake: 'Onderrug laten opkomen van de grond. Maak de beweging kleiner als dat nodig is.'
+      focus: 'Je onderrug mag NIET van de grond komen. Als dat wel gebeurt, maak de beweging kleiner. Tip: als je merkt dat je andere knie mee intrekt als compensatie, begin dan met alleen je been strekken (armen blijven omhoog) of alleen je arm strekken (benen op 90\u00b0). Zodra dat lukt zonder compensatie, combineer je arm + been.',
+      mistake: 'Onderrug laten opkomen van de grond, of de andere knie naar je borst trekken om te compenseren. Maak de beweging kleiner totdat je het gecontroleerd kunt.'
     }
   },
   'bird-dog': {
@@ -312,7 +312,7 @@ var EXERCISE_DB = {
     rest: 30,
     isBodyweight: true,
     tip: 'Langzaam wisselen, niet forceren',
-    videoUrl: '',
+    videoUrl: 'videos/cat-cow.mp4',
     youtubeId: '2of247Kt0tU',
     instruction: {
       goal: 'Rugmobiliteit verbeteren en pijn verlichten.',
