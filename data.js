@@ -197,7 +197,7 @@ var EXERCISE_DB = {
     defaultWeight: 8,
     rest: 60,
     tip: 'Rug recht, knie\u00ebn in lijn met tenen. Stop bij rugklachten.',
-    videoUrl: 'videos/goblet-squat.mp4',
+    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-dumbbell-goblet-squat-front.mp4',
     youtubeId: 'MeIiIdhvXT4',
     instruction: {
       goal: 'Benen, billen en core trainen met \u00e9\u00e9n oefening.',
@@ -220,7 +220,7 @@ var EXERCISE_DB = {
     rest: 45,
     isBodyweight: true,
     tip: 'Knijp billen samen bovenaan, onderrug niet overmatig hollen',
-    videoUrl: 'videos/glute-bridge.mp4',
+    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-glute-bridge-front.mp4',
     youtubeId: '8bbE64NuDTU',
     instruction: {
       goal: 'Bilspieren activeren en bekkenstand verbeteren. Corrigeert anterior pelvic tilt.',
@@ -368,6 +368,53 @@ var EXERCISE_DB = {
       focus: 'Ontspannen bewegen. Schouders laag houden — niet optrekken naar je oren.',
       mistake: 'Te snel of te groot beginnen met de cirkels. Start klein en bouw langzaam op.'
     }
+  },
+  'superman': {
+    id: 'superman',
+    name: 'Superman',
+    apparaat: 'Op de grond',
+    reps: '10\u201315',
+    defaultReps: 10,
+    rest: 45,
+    isBodyweight: true,
+    tip: 'Til armen en benen tegelijk op. Houd 2 sec vast bovenaan.',
+    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-superman-front.mp4',
+    youtubeId: '',
+    instruction: {
+      goal: 'Onderrug (erector spinae) en houdingsspieren versterken. Helpt tegen rugklachten bij zitten.',
+      steps: [
+        'Ga op je buik liggen, armen gestrekt voor je uit.',
+        'Til tegelijkertijd je armen, borst en benen van de grond.',
+        'Houd 2 seconden vast bovenaan \u2014 knijp je billen en onderrug samen.',
+        'Laat langzaam zakken en herhaal.'
+      ],
+      focus: 'Gecontroleerd bewegen, niet met een ruk omhoog. Kijk naar de grond (nek neutraal).',
+      mistake: 'Je hoofd in je nek gooien. Houd je nek in het verlengde van je rug.'
+    }
+  },
+  'back-extension': {
+    id: 'back-extension',
+    name: 'Rugextensie',
+    apparaat: 'Back extension bankje',
+    reps: '10\u201315',
+    defaultReps: 10,
+    defaultWeight: 0,
+    rest: 45,
+    isBodyweight: true,
+    tip: 'Armen gekruist voor je borst. Langzaam op en neer.',
+    videoUrl: 'https://media.musclewiki.com/media/uploads/videos/branded/male-bodyweight-back-extension-side.mp4',
+    youtubeId: '',
+    instruction: {
+      goal: 'Onderrug en houdingsspieren versterken. Sterk alternatief voor superman met meer range of motion.',
+      steps: [
+        'Ga in het back extension bankje staan, heupen tegen het kussen.',
+        'Kruis je armen voor je borst (of handen achter je hoofd).',
+        'Laat je bovenlichaam langzaam zakken tot je een rek voelt in je hamstrings.',
+        'Kom gecontroleerd terug omhoog tot je lichaam een rechte lijn vormt \u2014 niet verder.'
+      ],
+      focus: 'Niet te ver doorbuigen naar achteren. Stop als je lichaam recht is. Span je billen aan bovenaan.',
+      mistake: 'Te ver naar achteren doorgaan (holle rug). Je rug moet recht zijn bovenaan, niet gebogen.'
+    }
   }
 };
 
@@ -378,7 +425,7 @@ var PHASE_CONFIG = {
     description: 'Basistechnieken leren, lichaam laten wennen',
     unlockRequirement: null,
     krachtBoven: ['chest-press', 'shoulder-press', 'dumbbell-row', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
-    krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'bird-dog', 'cat-cow'],
+    krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'bird-dog', 'cat-cow'],
     krachtFull: ['chest-press', 'dumbbell-row', 'leg-ext', 'plank', 'neck-mobility', 'shoulder-mobility']
   },
   2: {
@@ -386,7 +433,7 @@ var PHASE_CONFIG = {
     description: 'Meer variatie, hogere gewichten, extra oefeningen',
     unlockRequirement: { sessions: 18, weeks: 6 },
     krachtBoven: ['chest-press', 'incline-press', 'shoulder-press', 'dumbbell-row', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
-    krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'bird-dog', 'cat-cow'],
+    krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'back-extension', 'bird-dog', 'cat-cow'],
     krachtFull: ['chest-press', 'dumbbell-row', 'leg-ext', 'plank', 'neck-mobility', 'shoulder-mobility']
   }
 };
@@ -408,7 +455,7 @@ var TRAINING_DATA = {
     warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
     cooldown: '5 min rustig wandelen, daarna deze stretches:',
     cooldownStretches: ['hamstrings', 'quads', 'glutes', 'hip-flexor'],
-    exerciseIds: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'bird-dog', 'cat-cow']
+    exerciseIds: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'bird-dog', 'cat-cow']
   },
   krachtFull: {
     id: 'kracht-full',
