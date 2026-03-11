@@ -394,7 +394,7 @@ var EXERCISE_DB = {
   },
   'back-extension': {
     id: 'back-extension',
-    name: 'Rugextensie',
+    name: 'Rugextensie (bankje)',
     apparaat: 'Back extension bankje',
     reps: '10\u201315',
     defaultReps: 10,
@@ -415,6 +415,29 @@ var EXERCISE_DB = {
       focus: 'Niet te ver doorbuigen naar achteren. Stop als je lichaam recht is. Span je billen aan bovenaan.',
       mistake: 'Te ver naar achteren doorgaan (holle rug). Je rug moet recht zijn bovenaan, niet gebogen.'
     }
+  },
+  'lower-back-ext': {
+    id: 'lower-back-ext',
+    name: 'Rugextensie (grond)',
+    apparaat: 'Op de grond',
+    reps: '10\u201315',
+    defaultReps: 10,
+    rest: 45,
+    isBodyweight: true,
+    tip: 'Vergelijkbaar met superman, maar met handen bij je slapen.',
+    videoUrl: 'videos/lower-back-ext.mp4',
+    youtubeId: '',
+    instruction: {
+      goal: 'Onderrug versterken zonder apparaat. Kan overal, goede aanvulling op de superman.',
+      steps: [
+        'Ga op je buik liggen, benen gestrekt.',
+        'Handen bij je slapen of langs je lichaam.',
+        'Til je bovenlichaam van de grond door je onderrug aan te spannen.',
+        'Houd kort vast bovenaan, laat langzaam zakken.'
+      ],
+      focus: 'Houd je blik naar de grond (nek neutraal). Beweeg gecontroleerd, niet met een ruk.',
+      mistake: 'Je hoofd in je nek gooien. Kijk naar de grond, niet omhoog.'
+    }
   }
 };
 
@@ -425,7 +448,7 @@ var PHASE_CONFIG = {
     description: 'Basistechnieken leren, lichaam laten wennen',
     unlockRequirement: null,
     krachtBoven: ['chest-press', 'shoulder-press', 'dumbbell-row', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
-    krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'bird-dog', 'cat-cow'],
+    krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'lower-back-ext', 'bird-dog', 'cat-cow'],
     krachtFull: ['chest-press', 'dumbbell-row', 'leg-ext', 'plank', 'neck-mobility', 'shoulder-mobility']
   },
   2: {
@@ -433,7 +456,7 @@ var PHASE_CONFIG = {
     description: 'Meer variatie, hogere gewichten, extra oefeningen',
     unlockRequirement: { sessions: 18, weeks: 6 },
     krachtBoven: ['chest-press', 'incline-press', 'shoulder-press', 'dumbbell-row', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
-    krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'back-extension', 'bird-dog', 'cat-cow'],
+    krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'back-extension', 'lower-back-ext', 'bird-dog', 'cat-cow'],
     krachtFull: ['chest-press', 'dumbbell-row', 'leg-ext', 'plank', 'neck-mobility', 'shoulder-mobility']
   }
 };
@@ -455,7 +478,7 @@ var TRAINING_DATA = {
     warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
     cooldown: '5 min rustig wandelen, daarna deze stretches:',
     cooldownStretches: ['hamstrings', 'quads', 'glutes', 'hip-flexor'],
-    exerciseIds: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'bird-dog', 'cat-cow']
+    exerciseIds: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'lower-back-ext', 'bird-dog', 'cat-cow']
   },
   krachtFull: {
     id: 'kracht-full',
