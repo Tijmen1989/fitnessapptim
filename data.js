@@ -465,6 +465,7 @@ var TRAINING_DATA = {
   krachtBoven: {
     id: 'kracht-boven',
     name: 'Kracht: bovenlichaam + core',
+    description: 'Focus op borst, schouders, rug en armen. Core stabiliteit met plank en dead bug.',
     type: 'kracht',
     warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
     cooldown: '5 min rustig wandelen, daarna deze stretches:',
@@ -474,6 +475,7 @@ var TRAINING_DATA = {
   krachtOnder: {
     id: 'kracht-onder',
     name: 'Kracht: onderlichaam + rug',
+    description: 'Focus op benen, billen en onderrug. Stabiliteit met core oefeningen.',
     type: 'kracht',
     warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
     cooldown: '5 min rustig wandelen, daarna deze stretches:',
@@ -483,6 +485,7 @@ var TRAINING_DATA = {
   krachtFull: {
     id: 'kracht-full',
     name: 'Kracht: full body + mobiliteit',
+    description: 'Hele lichaam trainen: borst, rug, benen en core. Plus nek- en schoudermobiliteit.',
     type: 'kracht',
     warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
     cooldown: '5 min rustig wandelen, daarna volledige stretchroutine:',
@@ -496,14 +499,14 @@ var TRAINING_DATA = {
     options: [
       {
         name: 'Wandelen/joggen (aanbevolen)',
-        totalMin: 35,
+        totalMin: 34,
         isPrimary: true,
         phases: [
-          { name: 'Warming-up', duur: 5, detail: '5.5 km/u, incline 0\u20131%', intensity: 'low' },
-          { name: 'Hoofddeel', duur: 25, detail: 'Wissel: 3 min wandelen (5.5 km/u) + 1 min joggen (7.0 km/u)', intensity: 'medium' },
+          { name: 'Warming-up', duur: 5, detail: '5.5 km/u, incline 1%', intensity: 'low' },
+          { name: 'Hoofddeel', duur: 24, detail: '6 rondes: 3 min wandelen (5.5 km/u) + 1 min joggen (7.0 km/u). Incline 1\u20132%.', intensity: 'medium' },
           { name: 'Cooldown', duur: 5, detail: '5.0\u20135.5 km/u, incline 0%', intensity: 'low' }
         ],
-        interval: { fast: 60, slow: 180, fastDetail: '7.0\u20138.0 km/u (joggen)', slowDetail: '5.5 km/u (wandelen)' }
+        interval: { fast: 60, slow: 180, fastDetail: '7.0\u20138.0 km/u, incline 1% (joggen)', slowDetail: '5.5 km/u, incline 1\u20132% (wandelen)' }
       },
       {
         name: 'Stevig wandelen',

@@ -9,6 +9,7 @@ var _audioCtx = null;
 function playTimerSound(type) {
   try {
     if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') _audioCtx.resume();
     var ctx = _audioCtx;
     var now = ctx.currentTime;
     if (type === 'short') {
@@ -688,10 +689,46 @@ function releaseWakeLock() {
   }
 }
 
-// Re-acquire wake lock when page becomes visible again
+// Background timer compensation: timers lopen door als app niet actief is
+var _bgHiddenAt = 0;
 document.addEventListener('visibilitychange', function() {
-  if (document.visibilityState === 'visible' && trainingModeActive) {
-    requestWakeLock();
+  if (document.visibilityState === 'hidden') {
+    _bgHiddenAt = Date.now();
+  } else if (document.visibilityState === 'visible') {
+    if (trainingModeActive) requestWakeLock();
+    if (_bgHiddenAt > 0) {
+      var elapsed = Math.floor((Date.now() - _bgHiddenAt) / 1000);
+      _bgHiddenAt = 0;
+      if (elapsed > 1) {
+        // Compenseer training timers
+        if (tmTimerSeconds > 0 && (tmState === 'warmup-timer' || tmState === 'resting' || tmState === 'plank-timer' || tmState === 'cooldown-timer')) {
+          tmTimerSeconds = Math.max(0, tmTimerSeconds - elapsed);
+          if (tmTimerSeconds <= 0) {
+            clearInterval(tmTimerInterval);
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            playTimerSound('double');
+            if (tmState === 'warmup-timer') { tmState = 'idle'; finishWarmup(); }
+            else if (tmState === 'resting') { tmState = 'idle'; renderTrainingStep(); }
+            else if (tmState === 'plank-timer') { tmState = 'idle'; completeSet(); }
+            else if (tmState === 'cooldown-timer') { finishCooldownWalking(); }
+          } else {
+            // Update display
+            var d = document.getElementById('tmTimerDisplay');
+            if (d) d.textContent = formatTimer(tmTimerSeconds);
+          }
+        }
+        // Compenseer cardio timers
+        if (cardioTimerActive && cardioPhaseSeconds > 0) {
+          cardioPhaseSeconds = Math.max(0, cardioPhaseSeconds - elapsed);
+          if (intervalIsAutoMode) intervalSecondsLeft = Math.max(0, intervalSecondsLeft - elapsed);
+          if (cardioPhaseSeconds <= 0) {
+            advanceCardioPhase();
+          } else {
+            renderCardioTimerStep();
+          }
+        }
+      }
+    }
   }
 });
 
@@ -712,7 +749,22 @@ var sessionExerciseLog = {};
 var trainingStartTime = null;
 var trainingPhase = 'warmup'; // warmup, exercises, cooldown
 
+function unlockAudio() {
+  // iOS/mobile: AudioContext moet worden "unlocked" door user gesture
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  // Speel een stille toon om audio te activeren
+  try {
+    var osc = _audioCtx.createOscillator();
+    var gain = _audioCtx.createGain();
+    osc.connect(gain); gain.connect(_audioCtx.destination);
+    gain.gain.setValueAtTime(0, _audioCtx.currentTime);
+    osc.start(_audioCtx.currentTime); osc.stop(_audioCtx.currentTime + 0.01);
+  } catch(e) {}
+}
+
 function startTrainingMode(trainingKey) {
+  unlockAudio(); // Activeer audio bij user-klik
   currentTraining = TRAINING_DATA[trainingKey];
   currentTrainingKey = trainingKey;
   if (!currentTraining || currentTraining.type !== 'kracht') return;
@@ -734,26 +786,51 @@ function startTrainingMode(trainingKey) {
   renderTrainingStep();
 }
 
-function pauseTraining() {
-  // Sla de volledige training state op
-  var pauseData = {
-    trainingKey: currentTrainingKey,
-    exerciseIndex: currentExerciseIndex,
-    currentSet: currentSet,
-    sessionExerciseLog: sessionExerciseLog,
-    trainingStartTime: trainingStartTime,
-    trainingPhase: trainingPhase,
-    pausedAt: new Date().toISOString()
-  };
-  setStore('pausedTraining', pauseData);
+var trainingPaused = false;
+var pausedTimerSeconds = 0;
 
-  // Sluit training mode zonder op te slaan
-  trainingModeActive = false;
+function pauseTraining() {
+  if (trainingPaused) return;
+  trainingPaused = true;
+  pausedTimerSeconds = tmTimerSeconds;
   clearInterval(tmTimerInterval);
-  releaseWakeLock();
-  document.getElementById('trainingMode').classList.remove('active');
-  document.getElementById('bottomNav').style.display = 'flex';
-  renderToday();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'pauseOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;';
+  overlay.innerHTML = '<div style="font-size:48px;margin-bottom:16px">\u23F8\uFE0F</div>' +
+    '<h2 style="font-size:24px;margin-bottom:8px">Gepauzeerd</h2>' +
+    '<p style="opacity:0.7;margin-bottom:32px">Je training staat op pauze</p>' +
+    '<button onclick="resumeFromPause()" style="background:var(--primary);color:white;border:none;padding:16px 48px;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer;margin-bottom:12px">Hervat training</button>' +
+    '<button onclick="exitPause()" style="background:transparent;color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.3);padding:10px 32px;border-radius:8px;font-size:14px;cursor:pointer">Training stoppen</button>';
+  document.body.appendChild(overlay);
+}
+
+function resumeFromPause() {
+  trainingPaused = false;
+  var overlay = document.getElementById('pauseOverlay');
+  if (overlay) overlay.remove();
+  tmTimerSeconds = pausedTimerSeconds;
+  if (tmState === 'warmup-timer') startWarmupTimer(tmTimerSeconds / 60);
+  else if (tmState === 'resting') startRestTimer();
+  else if (tmState === 'plank-timer') {
+    clearInterval(tmTimerInterval);
+    tmTimerInterval = setInterval(function() {
+      tmTimerSeconds--;
+      var display = document.getElementById('tmTimerDisplay');
+      if (display) display.textContent = formatTimer(tmTimerSeconds);
+      if (tmTimerSeconds <= 0) { clearInterval(tmTimerInterval); if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]); playTimerSound('double'); tmState = 'idle'; completeSet(); }
+    }, 1000);
+  }
+  else if (tmState === 'cooldown-timer') startCooldownTimer();
+  else renderTrainingStep();
+}
+
+function exitPause() {
+  trainingPaused = false;
+  var overlay = document.getElementById('pauseOverlay');
+  if (overlay) overlay.remove();
+  confirmExitTraining();
 }
 
 function hasPausedTraining() {
@@ -965,6 +1042,7 @@ function renderTrainingStep() {
     if (tmState === 'plank-timer') {
       html += '<div class="tm-timer plank-active" id="tmTimerDisplay">' + formatTimer(tmTimerSeconds) + '</div>';
       html += '<div style="font-size:14px;color:var(--text-light);margin-bottom:16px">Hou vol! Je kunt dit!</div>';
+      html += '<button class="tm-btn tm-btn-success" onclick="clearInterval(tmTimerInterval);tmState=\'idle\';completeSet()">Plank klaar! \u2714</button>';
     } else {
       html += '<div style="margin-bottom:16px;font-size:16px;color:var(--text-light)">Houd ' + ex.reps + ' vol!</div>';
       html += '<button class="tm-btn tm-btn-accent" onclick="startPlankTimer(' + plankSec + ')">Start plank timer (' + plankSec + ' sec)</button>';
@@ -1019,6 +1097,15 @@ function renderWarmupScreen() {
   }
 
   var html = '';
+
+  // Training doel tonen
+  if (currentTraining.description) {
+    html += '<div style="background:var(--info-bg);border-radius:12px;padding:12px 16px;margin-bottom:16px;text-align:left">';
+    html += '<div style="font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:4px">Doel van vandaag</div>';
+    html += '<div style="font-size:14px;color:var(--text);line-height:1.5">' + currentTraining.description + '</div>';
+    html += '</div>';
+  }
+
   html += '<div class="tm-warmup-cooldown">';
   html += '<div class="tm-phase-icon">\uD83D\uDD25</div>';
   html += '<div class="tm-exercise-name">Warming-up</div>';
@@ -1073,56 +1160,66 @@ function getStretchById(id) {
   return null;
 }
 
+var cooldownSubPhase = 'walking'; // 'walking' or 'stretches'
+
 function renderCooldownScreen() {
   var body = document.getElementById('tmBody');
-  var cooldown = currentTraining.cooldown;
   var stretchIds = currentTraining.cooldownStretches || [];
 
   updateProgressBar();
 
-  var html = '';
-  html += '<div class="tm-warmup-cooldown">';
-  html += '<div class="tm-phase-icon">\uD83E\uDDD8</div>';
-  html += '<div class="tm-exercise-name">Cooldown</div>';
-  html += '<div style="color:var(--text-light);font-size:15px;margin:8px 0 4px;line-height:1.5">' + (cooldown || '5 min rustig stretchen') + '</div>';
+  if (cooldownSubPhase === 'walking') {
+    // Fase 1: Rustig wandelen
+    var html = '<div class="tm-warmup-cooldown">';
+    html += '<div class="tm-phase-icon">\uD83D\uDEB6</div>';
+    html += '<div class="tm-exercise-name">Cooldown: wandelen</div>';
+    html += '<div style="color:var(--text-light);font-size:15px;margin:8px 0 16px;line-height:1.5">5 min rustig wandelen op de loopband (5.0\u20135.5 km/u)</div>';
 
-  // Show concrete stretch exercises with instructions visible
-  if (stretchIds.length > 0) {
-    html += '<div style="text-align:left;margin:12px 0;background:var(--bg);border-radius:12px;padding:4px 0">';
-    stretchIds.forEach(function(sid, idx) {
-      var s = getStretchById(sid);
-      if (!s) return;
-      html += '<div style="padding:10px 14px;border-top:' + (idx === 0 ? 'none' : '1px solid var(--border)') + '">';
-      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
-      html += '<span style="font-size:12px;font-weight:700;color:var(--primary);min-width:18px">' + (idx + 1) + '</span>';
-      html += '<div style="flex:1"><div style="font-size:14px;font-weight:600">' + s.name + ' <span style="font-weight:400;color:var(--text-light);font-size:12px">' + s.duur + 's' + (s.perKant ? '/kant' : '') + '</span></div></div>';
+    if (tmState === 'cooldown-timer') {
+      html += '<div class="tm-timer cooldown" id="tmTimerDisplay">' + formatTimer(tmTimerSeconds) + '</div>';
+      html += '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px">';
+      html += '<button class="tm-btn tm-btn-success" onclick="finishCooldownWalking()">Wandelen klaar \u2192 Stretches</button>';
+      html += '<button class="tm-btn tm-btn-outline" style="max-width:150px" onclick="addRestTime(60)">+1 min</button>';
       html += '</div>';
-      html += '<div style="padding:0 0 0 26px">';
-      if (s.videoUrl) html += '<video src="' + s.videoUrl + '" autoplay loop muted playsinline style="width:100%;max-width:180px;border-radius:8px;margin-bottom:6px"></video>';
-      html += '<p style="font-size:12px;color:var(--text-light);line-height:1.5;margin:0">' + s.instruction + '</p>';
-      if (s.focus) html += '<p style="font-size:12px;color:var(--success);line-height:1.4;margin:4px 0 0">\u2714\uFE0F ' + s.focus + '</p>';
-      html += '</div></div>';
-    });
+    } else {
+      html += '<button class="tm-btn tm-btn-accent" onclick="startCooldownTimer()" style="margin-top:16px">Start wandel-timer (5 min)</button>';
+      html += '<button class="tm-btn tm-btn-outline tm-btn-small" onclick="finishCooldownWalking()" style="margin-top:8px">Overslaan \u2192 Stretches</button>';
+    }
     html += '</div>';
-  }
-
-  if (tmState === 'cooldown-timer') {
-    html += '<div class="tm-timer cooldown" id="tmTimerDisplay">' + formatTimer(tmTimerSeconds) + '</div>';
-    html += '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px">';
-    html += '<button class="tm-btn tm-btn-success" onclick="finishCooldown()">\u2705 Cooldown klaar!</button>';
-    html += '<button class="tm-btn tm-btn-outline" style="max-width:150px" onclick="addRestTime(60)">+1 min</button>';
-    html += '</div>';
+    body.innerHTML = html;
+    document.getElementById('tmHeader').querySelector('h2').textContent = 'Cooldown \u2014 Wandelen';
   } else {
-    html += '<button class="tm-btn tm-btn-accent" onclick="startCooldownTimer()" style="margin-top:16px">Start cooldown timer (5 min)</button>';
-    html += '<button class="tm-btn tm-btn-success tm-btn-small" onclick="finishCooldown()" style="margin-top:8px">\u2705 Cooldown klaar!</button>';
+    // Fase 2: Stretches
+    var html = '<div class="tm-warmup-cooldown">';
+    html += '<div class="tm-phase-icon">\uD83E\uDDD8</div>';
+    html += '<div class="tm-exercise-name">Cooldown: stretches</div>';
+    html += '<div style="color:var(--text-light);font-size:15px;margin:8px 0 4px;line-height:1.5">Houd elke stretch rustig vast</div>';
+
+    if (stretchIds.length > 0) {
+      html += '<div style="text-align:left;margin:12px 0;background:var(--bg);border-radius:12px;padding:4px 0">';
+      stretchIds.forEach(function(sid, idx) {
+        var s = getStretchById(sid);
+        if (!s) return;
+        html += '<div style="padding:10px 14px;border-top:' + (idx === 0 ? 'none' : '1px solid var(--border)') + '">';
+        html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">';
+        html += '<span style="font-size:12px;font-weight:700;color:var(--primary);min-width:18px">' + (idx + 1) + '</span>';
+        html += '<div style="flex:1"><div style="font-size:14px;font-weight:600">' + s.name + ' <span style="font-weight:400;color:var(--text-light);font-size:12px">' + s.duur + 's' + (s.perKant ? '/kant' : '') + '</span></div></div>';
+        html += '</div>';
+        html += '<div style="padding:0 0 0 26px">';
+        if (s.videoUrl) html += '<video src="' + s.videoUrl + '" autoplay loop muted playsinline style="width:100%;max-width:180px;border-radius:8px;margin-bottom:6px"></video>';
+        html += '<p style="font-size:12px;color:var(--text-light);line-height:1.5;margin:0">' + s.instruction + '</p>';
+        if (s.focus) html += '<p style="font-size:12px;color:var(--success);line-height:1.4;margin:4px 0 0">\u2714\uFE0F ' + s.focus + '</p>';
+        html += '</div></div>';
+      });
+      html += '</div>';
+    }
+
+    html += '<button class="tm-btn tm-btn-success" onclick="finishCooldown()" style="margin-top:16px">\u2705 Training afronden!</button>';
+    html += '</div>';
+    body.innerHTML = html;
+    document.getElementById('tmHeader').querySelector('h2').textContent = 'Cooldown \u2014 Stretches';
   }
-
-  html += '</div>';
-  body.innerHTML = html;
-  document.getElementById('tmHeader').querySelector('h2').textContent = 'Cooldown';
 }
-
-
 
 function startCooldownTimer() {
   tmState = 'cooldown-timer';
@@ -1137,14 +1234,22 @@ function startCooldownTimer() {
       clearInterval(tmTimerInterval);
       if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
       playTimerSound('double');
-      finishCooldown();
+      finishCooldownWalking();
     }
   }, 1000);
+}
+
+function finishCooldownWalking() {
+  clearInterval(tmTimerInterval);
+  tmState = 'idle';
+  cooldownSubPhase = 'stretches';
+  renderCooldownScreen();
 }
 
 function finishCooldown() {
   clearInterval(tmTimerInterval);
   tmState = 'idle';
+  cooldownSubPhase = 'walking'; // reset voor volgende training
   exitTrainingMode(true);
 }
 
@@ -1587,7 +1692,7 @@ function startCardioTimer(trainingKey, optionIndex) {
 function initIntervalForPhase() {
   // Check if this phase is an auto-interval phase (has interval config + intensity 'high')
   var phase = cardioPhases[cardioPhaseIndex];
-  if (cardioIntervalConfig && cardioIntervalConfig.fast && phase && phase.intensity === 'high') {
+  if (cardioIntervalConfig && cardioIntervalConfig.fast && phase && phase.intensity !== 'low') {
     intervalIsAutoMode = true;
     cardioIntervalMode = 'slow';
     intervalSecondsLeft = cardioIntervalConfig.slow;
