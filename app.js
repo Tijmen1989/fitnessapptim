@@ -500,16 +500,46 @@ function getSmartWeightOptions(exerciseId, currentWeight, step) {
     return vals;
   }
 
-  // Machine-oefeningen: breed bereik tonen
+  // Machine-oefeningen: gebruik custom gewichtenlijst als die is ingesteld
+  var machineWeights = getStore('availableWeights', {});
+  var customMachineList = machineWeights[exerciseId];
+  if (customMachineList && customMachineList.length > 0) {
+    // Gebruik de door gebruiker ingestelde gewichten (bv. 10,20,30,40,60,70,80)
+    if (currentWeight === 0) {
+      // Geen historie: toon ALLE beschikbare gewichten
+      for (var mi = 0; mi < customMachineList.length; mi++) {
+        options.push({ value: customMachineList[mi], isSuggestion: false });
+      }
+      return options;
+    }
+    // Met historie: toon 2 onder huidig, huidig, 2 boven
+    var mIdx = -1;
+    for (var mj = 0; mj < customMachineList.length; mj++) {
+      if (customMachineList[mj] >= currentWeight) { mIdx = mj; break; }
+    }
+    if (mIdx === -1) mIdx = customMachineList.length - 1;
+    var mVals = [];
+    var mShown = {};
+    for (var mk = Math.max(0, mIdx - 2); mk <= Math.min(customMachineList.length - 1, mIdx + 2); mk++) {
+      mVals.push({ value: customMachineList[mk], isSuggestion: customMachineList[mk] > currentWeight });
+      mShown[customMachineList[mk]] = true;
+    }
+    if (!mShown[currentWeight] && currentWeight > 0) {
+      mVals.push({ value: currentWeight, isSuggestion: false });
+      mVals.sort(function(a, b) { return a.value - b.value; });
+    }
+    return mVals;
+  }
+
+  // Fallback: geen custom lijst, toon breed bereik
   if (currentWeight === 0) {
-    // Geen historie: toon breed bereik van 5 tot 70 in stappen
     for (var si = 5; si <= 70; si += step) {
       options.push({ value: si, isSuggestion: false });
     }
     return options;
   }
 
-  // Met historie: toon 3 onder huidig, huidig, 3 boven (breder bereik)
+  // Met historie: toon 3 onder huidig, huidig, 3 boven
   var vals2 = [];
   for (var s = -3; s <= 3; s++) {
     var v = currentWeight + (s * step);
@@ -517,7 +547,6 @@ function getSmartWeightOptions(exerciseId, currentWeight, step) {
       vals2.push({ value: v, isSuggestion: s > 0 });
     }
   }
-  // Voeg altijd het huidige gewicht toe als het er niet in zit
   var hasCurrentWeight = vals2.some(function(o) { return o.value === currentWeight; });
   if (!hasCurrentWeight && currentWeight > 0) {
     vals2.push({ value: currentWeight, isSuggestion: false });

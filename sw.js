@@ -1,4 +1,4 @@
-var CACHE_NAME = 'tim-training-v27';
+var CACHE_NAME = 'tim-training-v28';
 var MEDIA_CACHE = 'training-media-v1';
 var URLS_TO_CACHE = [
   './',
