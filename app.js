@@ -733,7 +733,7 @@ document.addEventListener('visibilitychange', function() {
     if (_bgHiddenAt > 0) {
       var elapsed = Math.floor((Date.now() - _bgHiddenAt) / 1000);
       _bgHiddenAt = 0;
-      if (elapsed > 1) {
+      if (elapsed > 1 && trainingModeActive) {
         // Compenseer training timers
         if (tmTimerSeconds > 0 && (tmState === 'warmup-timer' || tmState === 'resting' || tmState === 'plank-timer' || tmState === 'cooldown-timer')) {
           tmTimerSeconds = Math.max(0, tmTimerSeconds - elapsed);
@@ -943,6 +943,10 @@ function confirmExitTraining() {
 function exitTrainingMode(save) {
   trainingModeActive = false;
   clearInterval(tmTimerInterval);
+  clearInterval(cardioTimerInterval);
+  clearInterval(stretchTimerInterval);
+  cardioTimerActive = false;
+  tmState = 'idle';
   releaseWakeLock();
   document.getElementById('trainingMode').classList.remove('active');
   document.getElementById('bottomNav').style.display = 'flex';
