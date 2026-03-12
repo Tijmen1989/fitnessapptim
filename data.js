@@ -636,21 +636,21 @@ var STRETCH_ROUTINES = [
   },
   {
     id: 'rug-stretch',
-    name: 'Rug stretch (child pose)',
+    name: 'Rug stretch (cobra)',
     duur: 30,
     perKant: false,
-    instruction: 'Op handen en knie\u00ebn, duw je billen naar je hielen, armen gestrekt naar voren. Laat je borst zakken richting de grond. Houd 30 seconden.',
+    instruction: 'Ga op je buik liggen, handen naast je schouders. Duw je bovenlichaam langzaam omhoog terwijl je heupen op de grond blijven. Strek je armen zover als comfortabel is. Houd 30 seconden.',
     videoUrl: 'videos/rug-stretch.mp4',
-    focus: 'Ontspan je rug volledig. Adem diep in en uit.'
+    focus: 'Schouders laag houden, niet ophangen. Rustig ademen.'
   },
   {
     id: 'glutes',
-    name: 'Billen & heup stretch',
+    name: 'Billen & heup stretch (pigeon)',
     duur: 30,
     perKant: true,
-    instruction: 'Ga op je rug liggen. Leg je rechterenkel op je linkerknie. Trek je linkerbeen naar je borst. Je voelt een rek in je rechterbil. Houd 30 seconden, wissel.',
+    instruction: 'Zit op de grond, buig één been naar voren (scheenbeen dwars voor je). Strek je andere been recht naar achteren. Leun met je bovenlichaam naar voren over je gebogen been. Houd 30 seconden, wissel.',
     videoUrl: 'videos/glutes.mp4',
-    focus: 'Ontspan schouders en nek, trek het been rustig naar je toe'
+    focus: 'Houd je heupen zo recht mogelijk. Leun rustig verder als het kan.'
   }
 ];
 
