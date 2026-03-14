@@ -2339,6 +2339,14 @@ function renderSorenessCheck(trainingKey) {
       html += '<div style="padding:10px 16px;border-top:1px solid var(--border)">';
       html += '<div style="font-size:13px;color:var(--text);line-height:1.5;background:' + advice.bg + ';border-radius:8px;padding:10px 12px;border:1px solid ' + advice.color + '">';
       html += '<strong>' + advice.emoji + ' ' + advice.title + '</strong><br>' + advice.text;
+      if (advice.showPostpone) {
+        var postponed = getStore('postponedTraining', null);
+        if (postponed && postponed.trainingKey === trainingKey && postponed.fromDate === todayKey) {
+          html += '<div style="margin-top:8px;font-size:12px;color:var(--text-light)">Training is verschoven naar morgen.</div>';
+        } else {
+          html += '<div style="margin-top:10px"><button onclick="postponeTraining(\'' + trainingKey + '\')" style="padding:8px 16px;border-radius:8px;border:1px solid ' + advice.color + ';background:white;color:' + advice.color + ';cursor:pointer;font-size:13px;font-weight:600">Verschuif naar morgen</button></div>';
+        }
+      }
       html += '</div></div>';
     }
   }
@@ -2384,8 +2392,9 @@ function getSorenessAdvice(todayData, trainingKey) {
     var where2 = relevantPain.length > 0 ? ' in je ' + relevantPain.join(' en ') : '';
     return {
       emoji: '\u26D4', title: 'Rust aanbevolen',
-      text: 'Zware spierpijn' + where2 + '. Je spieren zijn nog aan het herstellen (DOMS). Overweeg vandaag alleen licht te wandelen. Trainen met zware pijn verhoogt blessurerisico en vertraagt herstel.',
-      color: 'var(--danger, #c62828)', bg: 'var(--danger-bg, #ffebee)'
+      text: 'Zware spierpijn' + where2 + '. Je spieren zijn nog aan het herstellen (DOMS). Overweeg vandaag alleen licht te wandelen of de training naar morgen te verschuiven.',
+      color: 'var(--danger, #c62828)', bg: 'var(--danger-bg, #ffebee)',
+      showPostpone: true
     };
   }
 }
@@ -2403,6 +2412,33 @@ function setSoreness(groupId, level) {
   }
   setStore('sorenessLog', sorenessLog);
   renderToday();
+}
+
+function postponeTraining(trainingKey) {
+  var todayKey = getTodayKey();
+  var tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var tomorrowKey = tomorrow.getFullYear() + '-' + String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' + String(tomorrow.getDate()).padStart(2, '0');
+  setStore('postponedTraining', {
+    trainingKey: trainingKey,
+    fromDate: todayKey,
+    toDate: tomorrowKey
+  });
+  renderToday();
+}
+
+function getPostponedTraining() {
+  var p = getStore('postponedTraining', null);
+  if (!p) return null;
+  var todayKey = getTodayKey();
+  // Alleen tonen op de doeldatum
+  if (p.toDate === todayKey) return p;
+  // Verlopen: opruimen als het al voorbij is
+  if (p.toDate < todayKey) {
+    setStore('postponedTraining', null);
+    return null;
+  }
+  return null;
 }
 
 function resetSoreness() {
@@ -2432,11 +2468,27 @@ function renderToday() {
   var content = document.getElementById('todayContent');
   var trainingKey = schedule[dayOfWeek];
 
+  // Check voor verschoven training van gisteren
+  var postponed = getPostponedTraining();
+  var isPostponed = false;
+  if (!trainingKey && postponed && postponed.trainingKey) {
+    trainingKey = postponed.trainingKey;
+    isPostponed = true;
+  }
+
   // Build motivation strip + weekly summary
   var motivHtml = '';
   if (hasPausedTraining()) {
     motivHtml += renderResumeBanner();
   }
+
+  if (isPostponed) {
+    motivHtml += '<div style="margin:8px 16px;padding:12px 16px;background:var(--info-bg);border:1px solid var(--primary);border-radius:12px;font-size:13px;line-height:1.5">';
+    motivHtml += '<strong>Verschoven training</strong><br>Deze training is verschoven van gisteren omdat je spierpijn had. Voel je je vandaag beter? Dan kun je hem nu doen!';
+    motivHtml += '<div style="margin-top:8px"><button onclick="setStore(\'postponedTraining\',null);renderToday()" style="padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:12px">Toch overslaan</button></div>';
+    motivHtml += '</div>';
+  }
+
   motivHtml += renderWeekSummary() + renderProteinReminder() + renderSorenessCheck(trainingKey) + renderMotivationStrip();
 
   if (!trainingKey) {
