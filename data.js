@@ -379,7 +379,7 @@ var EXERCISE_DB = {
     isBodyweight: true,
     tip: 'Til armen en benen tegelijk op. Houd 2 sec vast bovenaan.',
     videoUrl: 'videos/superman.mp4',
-    youtubeId: '',
+    youtubeId: 'J9zXkxUAfUA',
     instruction: {
       goal: 'Onderrug (erector spinae) en houdingsspieren versterken. Helpt tegen rugklachten bij zitten.',
       steps: [
@@ -403,7 +403,7 @@ var EXERCISE_DB = {
     isBodyweight: true,
     tip: 'Armen gekruist voor je borst. Langzaam op en neer.',
     videoUrl: 'videos/back-extension.mp4',
-    youtubeId: '',
+    youtubeId: 'ph3pddpKzzw',
     instruction: {
       goal: 'Onderrug en houdingsspieren versterken. Sterk alternatief voor superman met meer range of motion.',
       steps: [
@@ -426,7 +426,7 @@ var EXERCISE_DB = {
     isBodyweight: true,
     tip: 'Vergelijkbaar met superman, maar met handen bij je slapen.',
     videoUrl: 'videos/lower-back-ext.mp4',
-    youtubeId: '',
+    youtubeId: 'cZxtPxeR2H8',
     instruction: {
       goal: 'Onderrug versterken zonder apparaat. Kan overal, goede aanvulling op de superman.',
       steps: [
