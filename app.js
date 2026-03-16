@@ -259,7 +259,7 @@ function getRecoveryWarningForTraining(trainingKey) {
   var lastIsOnder = last.name && last.name.toLowerCase().indexOf('onder') >= 0;
   var todayIsBoven = trainingKey === 'krachtBoven';
   var todayIsOnder = trainingKey === 'krachtOnder';
-  var todayIsFull = trainingKey === 'krachtFull';
+  var todayIsFull = trainingKey === 'krachtFull' || trainingKey === 'krachtCompound';
 
   // Zelfde spiergroep?
   if (todayIsBoven && lastIsBoven && daysSince <= 2) {
@@ -267,6 +267,10 @@ function getRecoveryWarningForTraining(trainingKey) {
   }
   if (todayIsOnder && lastIsOnder && daysSince <= 2) {
     return '\u26A0 Laatste training was ook onderlichaam. Overweeg bovenlichaam of cardio voor beter herstel.';
+  }
+  // Compound na boven of onder = extra belasting
+  if (todayIsFull && (lastIsBoven || lastIsOnder) && daysSince <= 1) {
+    return '\u26A0 Gisteren was kracht ' + (lastIsBoven ? 'boven' : 'onder') + 'lichaam. Neem het rustig aan bij de compound oefeningen.';
   }
   // Kracht na kracht vandaag of gisteren?
   if (lastIsKracht && daysSince === 0) {
@@ -308,11 +312,14 @@ function videoUrlToImageUrl(videoUrl) {
 function renderVideoHtml(ex) {
   // Local video (primary) — autoplay loop like MuscleWiki
   if (ex.videoUrl && ex.videoUrl.indexOf('videos/') === 0) {
+    var fallbackHtml = ex.youtubeId
+      ? 'this.parentElement.innerHTML=\'<a href=&quot;https://www.youtube.com/watch?v=' + ex.youtubeId + '&quot; target=&quot;_blank&quot; style=&quot;display:block;text-align:center;padding:16px;color:var(--primary);font-size:13px&quot;>Video laden mislukt — bekijk op YouTube ▶</a>\''
+      : 'this.parentElement.style.display=\'none\'';
     return '<div class="exercise-video-container">' +
       '<video class="exercise-video loaded" ' +
       'src="' + ex.videoUrl + '" ' +
       'autoplay loop muted playsinline ' +
-      'onerror="this.parentElement.style.display=\'none\'">' +
+      'onerror="' + fallbackHtml + '">' +
       '</video></div>';
   }
   // YouTube embed (fallback for exercises without local video)
@@ -864,6 +871,7 @@ var tmTimerEndTime = 0; // absolute end time for robust timer
 var tmState = 'idle'; // idle, set, resting
 var sessionExerciseLog = {};
 var _lastActivityTime = Date.now();
+var _skipConfirmed = false;
 var _idleCheckInterval = null;
 var trainingStartTime = null;
 var trainingStartDate = null; // Vastgezet bij start, voorkomt middernacht-bug
@@ -1258,10 +1266,15 @@ function renderWarmupScreen() {
   updateProgressBar();
 
   // Parse warmup duration for timer (take lower bound, e.g. "5–8 min" → 5 min)
+  // Use average of range (e.g. "5–8 min" → 6 min)
   var warmupMin = 5;
   if (warmup.duur) {
-    var match = warmup.duur.match(/(\d+)/);
-    if (match) warmupMin = parseInt(match[1]);
+    var nums = warmup.duur.match(/(\d+)/g);
+    if (nums && nums.length >= 2) {
+      warmupMin = Math.round((parseInt(nums[0]) + parseInt(nums[1])) / 2);
+    } else if (nums) {
+      warmupMin = parseInt(nums[0]);
+    }
   }
 
   var html = '';
@@ -1547,7 +1560,8 @@ function renderRestScreen(ex) {
 
   html += '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">';
   html += '<button class="tm-btn tm-btn-accent" style="max-width:150px" onclick="skipRest()">Klaar, door!</button>';
-  html += '<button class="tm-btn tm-btn-outline" style="max-width:150px" onclick="addRestTime(30)">+30 sec</button>';
+  html += '<button class="tm-btn tm-btn-outline" style="max-width:120px" onclick="addRestTime(30)">+30s</button>';
+  html += '<button class="tm-btn tm-btn-outline" style="max-width:120px" onclick="addRestTime(60)">+1 min</button>';
   html += '</div>';
   html += '<button class="tm-btn tm-btn-outline tm-btn-small" onclick="goStepBack()" style="margin-top:12px;opacity:0.7">\u25C0 Vorige stap (undo)</button>';
 
@@ -1657,7 +1671,19 @@ function goStepBack() {
 function skipExercise() {
   var ex = getCurrentExercise();
   var exName = ex ? ex.name : 'deze oefening';
-  if (!confirm(exName + ' overslaan?')) return;
+  // Inline confirm i.p.v. browser confirm()
+  if (!_skipConfirmed) {
+    _skipConfirmed = true;
+    var btn = event && event.target;
+    if (btn) {
+      btn.textContent = 'Zeker weten?';
+      btn.style.color = 'var(--danger, #c62828)';
+      btn.style.borderColor = 'var(--danger, #c62828)';
+      setTimeout(function() { _skipConfirmed = false; renderTrainingStep(); }, 3000);
+    }
+    return;
+  }
+  _skipConfirmed = false;
   if (ex) {
     for (var sk = 1; sk <= totalSets; sk++) {
       var skipKey = ex.id + '_s' + sk;
@@ -2441,7 +2467,7 @@ var SORENESS_GROUPS = [
 
 var SORENESS_LEVELS = [
   { value: 0, label: 'Nee', color: 'var(--success)', bg: 'var(--success-bg)', textColor: 'var(--success-text)' },
-  { value: 1, label: 'Beetje stijf', color: '#66bb6a', bg: '#e8f5e9', textColor: '#2e7d32' },
+  { value: 1, label: 'Beetje stijf', color: 'var(--success)', bg: 'var(--success-bg)', textColor: 'var(--success-text)' },
   { value: 2, label: 'Best wel', color: 'var(--warning-border, orange)', bg: 'var(--warning-bg, #fff8e1)', textColor: 'var(--warning-text, #e65100)' },
   { value: 3, label: 'Flink!', color: 'var(--danger, #c62828)', bg: 'var(--danger-bg, #ffebee)', textColor: 'var(--danger-text, #c62828)' }
 ];
@@ -2463,8 +2489,16 @@ function renderSorenessCheck(trainingKey) {
   var sorenessLog = getStore('sorenessLog', {});
   var todayData = sorenessLog[todayKey] || {};
 
+  var allFilledNone = SORENESS_GROUPS.every(function(g) { return todayData[g.id] === 0; });
+
   var html = '<div class="card" style="margin:8px 16px;padding:0">';
   html += '<div class="card-header"><span class="icon">\uD83E\uDDB5</span>Nog last van vorige training?</div>';
+
+  if (Object.keys(todayData).length === 0) {
+    html += '<div style="padding:10px 16px;border-top:1px solid var(--border);text-align:center">';
+    html += '<button onclick="clearAllSoreness()" style="padding:10px 20px;border-radius:10px;border:2px solid var(--success);background:var(--success-bg);color:var(--success-text);cursor:pointer;font-size:14px;font-weight:600;width:100%">';
+    html += '\u2705 Geen klachten \u2014 lekker bezig!</button></div>';
+  }
 
   // Per spiergroep een vraag met knoppen
   SORENESS_GROUPS.forEach(function(group) {
@@ -2567,6 +2601,10 @@ function setSoreness(groupId, level) {
   }
   setStore('sorenessLog', sorenessLog);
   renderToday();
+}
+
+function clearAllSoreness() {
+  SORENESS_GROUPS.forEach(function(g) { setSoreness(g.id, 0); });
 }
 
 function postponeTraining(trainingKey) {
