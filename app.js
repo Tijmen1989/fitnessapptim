@@ -2482,8 +2482,12 @@ function getTrainingMuscleGroup(trainingKey) {
 }
 
 function renderSorenessCheck(trainingKey) {
-  // Geen spierpijncheck tonen als er geen training gepland staat
-  if (!trainingKey) return '';
+  // Op rustdagen: toon alleen als recent getraind (gisteren/eergisteren)
+  var isRestDay = !trainingKey;
+  if (isRestDay) {
+    var dsl = daysSinceLastTraining();
+    if (dsl > 2 || dsl >= 999) return '';
+  }
 
   var todayKey = getTodayKey();
   var sorenessLog = getStore('sorenessLog', {});
@@ -2545,8 +2549,11 @@ function renderSorenessCheck(trainingKey) {
 }
 
 function getSorenessAdvice(todayData, trainingKey) {
-  var targetGroups = getTrainingMuscleGroup(trainingKey);
-  // Hoogste pijnniveau in de spiergroepen die vandaag getraind worden
+  var isRestDay = !trainingKey;
+  // Op rustdagen: kijk naar alle spiergroepen. Op trainingsdagen: alleen relevante.
+  var targetGroups = isRestDay
+    ? SORENESS_GROUPS.map(function(g) { return g.id; })
+    : getTrainingMuscleGroup(trainingKey);
   var maxRelevant = 0;
   var relevantPain = [];
   targetGroups.forEach(function(gid) {
@@ -2558,6 +2565,37 @@ function getSorenessAdvice(todayData, trainingKey) {
     }
   });
 
+  // Rustdag-specifiek advies
+  if (isRestDay) {
+    if (maxRelevant === 0) {
+      return {
+        emoji: '\uD83D\uDE0C', title: 'Lekker hersteld!',
+        text: 'Geen spierpijn — je herstel verloopt goed. Geniet van je rustdag!',
+        color: 'var(--success)', bg: 'var(--success-bg)'
+      };
+    } else if (maxRelevant === 1) {
+      return {
+        emoji: '\uD83D\uDC4D', title: 'Goed bezig',
+        text: 'Lichte stijfheid is normaal na training. Licht bewegen of stretchen helpt het herstel.',
+        color: 'var(--success)', bg: 'var(--success-bg)'
+      };
+    } else if (maxRelevant === 2) {
+      return {
+        emoji: '\uD83E\uDDD8', title: 'Rust & herstel',
+        text: 'Nog wat spierpijn — goed dat je vandaag rust hebt. Licht wandelen of stretchen kan helpen.',
+        color: 'var(--warning-border, orange)', bg: 'var(--warning-bg, #fff8e1)'
+      };
+    } else {
+      var where3 = relevantPain.length > 0 ? ' in je ' + relevantPain.join(' en ') : '';
+      return {
+        emoji: '\u26D4', title: 'Stevig herstel nodig',
+        text: 'Flinke spierpijn' + where3 + '. Neem het rustig aan vandaag — geen zware activiteit. Hydratatie en eiwitten helpen bij herstel.',
+        color: 'var(--danger, #c62828)', bg: 'var(--danger-bg, #ffebee)'
+      };
+    }
+  }
+
+  // Trainingsdag advies
   if (maxRelevant === 0) {
     return {
       emoji: '\u2705', title: 'Volledig trainen',
@@ -3274,6 +3312,7 @@ function openVrijeTraining() {
   opts.innerHTML = html;
   modal.classList.add('show');
   document.body.style.overflow = 'hidden';
+  document.documentElement.style.overflow = 'hidden';
 }
 
 function selectVrijeTraining(key) {
@@ -3290,6 +3329,7 @@ function selectVrijeTraining(key) {
 function closeModal() {
   document.getElementById('vrijModal').classList.remove('show');
   document.body.style.overflow = '';
+  document.documentElement.style.overflow = '';
 }
 
 
