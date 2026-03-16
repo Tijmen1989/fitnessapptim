@@ -531,24 +531,40 @@ function getSmartWeightOptions(exerciseId, currentWeight, step) {
     return mVals;
   }
 
-  // Fallback: geen custom lijst, toon breed bereik
+  // Fallback: geen custom lijst — gebruik ronde stappen passend bij step
+  var unit = getWeightUnit(exerciseId);
+  var fallbackList = [];
+  if (unit === 'lbs') {
+    // Typische machine stappen in LBS
+    fallbackList = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
+  } else {
+    // Typische machine stappen in KG (afgerond op step)
+    var fStep = step > 0 ? step : 5;
+    for (var fi = fStep; fi <= 100; fi += fStep) {
+      fallbackList.push(parseFloat(fi.toFixed(1)));
+    }
+  }
+
   if (currentWeight === 0) {
-    for (var si = 5; si <= 70; si += step) {
-      options.push({ value: si, isSuggestion: false });
+    for (var si = 0; si < Math.min(fallbackList.length, 8); si++) {
+      options.push({ value: fallbackList[si], isSuggestion: false });
     }
     return options;
   }
 
-  // Met historie: toon 3 onder huidig, huidig, 3 boven
-  var vals2 = [];
-  for (var s = -3; s <= 3; s++) {
-    var v = currentWeight + (s * step);
-    if (v > 0) {
-      vals2.push({ value: v, isSuggestion: s > 0 });
-    }
+  // Met historie: toon 2 onder huidig, huidig, 2 boven
+  var fIdx = -1;
+  for (var fj = 0; fj < fallbackList.length; fj++) {
+    if (fallbackList[fj] >= currentWeight) { fIdx = fj; break; }
   }
-  var hasCurrentWeight = vals2.some(function(o) { return o.value === currentWeight; });
-  if (!hasCurrentWeight && currentWeight > 0) {
+  if (fIdx === -1) fIdx = fallbackList.length - 1;
+  var vals2 = [];
+  var shown2 = {};
+  for (var fk = Math.max(0, fIdx - 2); fk <= Math.min(fallbackList.length - 1, fIdx + 2); fk++) {
+    vals2.push({ value: fallbackList[fk], isSuggestion: fallbackList[fk] > currentWeight });
+    shown2[fallbackList[fk]] = true;
+  }
+  if (!shown2[currentWeight] && currentWeight > 0) {
     vals2.push({ value: currentWeight, isSuggestion: false });
     vals2.sort(function(a, b) { return a.value - b.value; });
   }
@@ -847,6 +863,7 @@ function pauseTraining() {
     '<button onclick="resumeFromPause()" style="background:var(--primary);color:white;border:none;padding:16px 48px;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer;margin-bottom:12px">Hervat training</button>' +
     '<button onclick="exitPause()" style="background:transparent;color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.3);padding:10px 32px;border-radius:8px;font-size:14px;cursor:pointer">Training stoppen</button>';
   document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
 }
 
 function resumeFromPause() {
@@ -2192,6 +2209,21 @@ function renderVandaagAnders(currentTrainingKey) {
   html += '\uD83D\uDD04 Vandaag anders? \u25BC</div>';
   html += '<div class="vandaag-anders-options" style="display:none;margin-top:8px">';
 
+  // Option 0: Verschuif naar morgen
+  var alreadyPostponed = getStore('postponedTraining', null);
+  if (!alreadyPostponed || alreadyPostponed.trainingKey !== currentTrainingKey) {
+    html += '<div class="vandaag-anders-item" onclick="postponeTraining(\'' + currentTrainingKey + '\')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--card);border-radius:12px;margin-bottom:8px;cursor:pointer;border:1px solid var(--primary)">';
+    html += '<span style="font-size:22px">\uD83D\uDCC5</span>';
+    html += '<div style="flex:1"><div style="font-weight:600;font-size:14px">Verschuif naar morgen</div>';
+    html += '<div style="font-size:12px;color:var(--text-light)">Geen energie? Doe deze training morgen</div></div>';
+    html += '<span style="color:var(--primary);font-size:12px">\u27A1\uFE0F</span></div>';
+  } else {
+    html += '<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--success-bg);border-radius:12px;margin-bottom:8px;border:1px solid var(--success)">';
+    html += '<span style="font-size:22px">\u2705</span>';
+    html += '<div style="flex:1"><div style="font-weight:600;font-size:14px;color:var(--success-text)">Verschoven naar morgen</div>';
+    html += '<div style="font-size:12px;color:var(--text-light)">Deze training staat klaar voor morgen</div></div></div>';
+  }
+
   // Option 1: Loopband wandelen
   html += '<div class="vandaag-anders-item" onclick="startLoopbandWandelen()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--card);border-radius:12px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border)">';
   html += '<span style="font-size:22px">\uD83D\uDEB6\u200D\u2640\uFE0F</span>';
@@ -2303,10 +2335,12 @@ function getTrainingMuscleGroup(trainingKey) {
 }
 
 function renderSorenessCheck(trainingKey) {
+  // Geen spierpijncheck tonen als er geen training gepland staat
+  if (!trainingKey) return '';
+
   var todayKey = getTodayKey();
   var sorenessLog = getStore('sorenessLog', {});
   var todayData = sorenessLog[todayKey] || {};
-  var allFilled = SORENESS_GROUPS.every(function(g) { return todayData[g.id] !== undefined; });
 
   var html = '<div class="card" style="margin:8px 16px;padding:0">';
   html += '<div class="card-header"><span class="icon">\uD83E\uDDB5</span>Nog last van vorige training?</div>';
@@ -2332,8 +2366,8 @@ function renderSorenessCheck(trainingKey) {
     html += '</div></div>';
   });
 
-  // Advies tonen als er iets is ingevuld en er een training gepland staat
-  if (trainingKey && Object.keys(todayData).length > 0) {
+  // Advies tonen zodra er minstens 1 groep is ingevuld
+  if (Object.keys(todayData).length > 0) {
     var advice = getSorenessAdvice(todayData, trainingKey);
     if (advice) {
       html += '<div style="padding:10px 16px;border-top:1px solid var(--border)">';
@@ -3004,6 +3038,7 @@ function stopStretchTimer() {
   var overlay = document.getElementById('stretchOverlay');
   if (overlay) overlay.remove();
   document.getElementById('bottomNav').style.display = 'flex';
+  document.body.style.overflow = '';
 }
 
 // ================================================================
@@ -3072,6 +3107,7 @@ function openVrijeTraining() {
 
   opts.innerHTML = html;
   modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
 }
 
 function selectVrijeTraining(key) {
@@ -3087,6 +3123,7 @@ function selectVrijeTraining(key) {
 
 function closeModal() {
   document.getElementById('vrijModal').classList.remove('show');
+  document.body.style.overflow = '';
 }
 
 
@@ -5031,12 +5068,14 @@ function openDayPreview(trainingKey, dateStr, dayLabel) {
 
   overlay.classList.add('active');
   document.getElementById('bottomNav').style.display = 'none';
+  document.body.style.overflow = 'hidden';
   initVideoObserver();
 }
 
 function closeDayPreview() {
   document.getElementById('dayPreviewOverlay').classList.remove('active');
   document.getElementById('bottomNav').style.display = 'flex';
+  document.body.style.overflow = '';
 }
 
 function renderKrachtPreview(container, training, trainingKey) {
@@ -5203,6 +5242,7 @@ function showOnboarding() {
   overlay.id = 'onboardingOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px';
   document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
   onboardingStep = 0;
   renderOnboardingStep();
 }
@@ -5308,6 +5348,7 @@ function nextOnboardingStep() {
     // Remove overlay and start app
     var overlay = document.getElementById('onboardingOverlay');
     if (overlay) overlay.remove();
+    document.body.style.overflow = '';
     renderToday();
     return;
   }
