@@ -719,7 +719,7 @@ function getProgressionSuggestion(exerciseId) {
       current: lastWeight,
       suggested: lastWeight,
       targetReps: maxReps,
-      message: '\u2705 ' + lastWeight + ' ' + unit + ' \u00b7 ' + numSets + '\u00d7' + maxReps + ' (nog 1x bevestigen)'
+      message: '\u2705 ' + lastWeight + ' ' + unit + ' \u00b7 ' + numSets + '\u00d7' + maxReps + ' \u2014 haal dit nog 1x, dan gewicht omhoog!'
     };
   } else if (lastReps < maxReps) {
     // Not at max reps yet → suggest more reps at same weight (steps of 2: 8→10→12)
@@ -729,7 +729,7 @@ function getProgressionSuggestion(exerciseId) {
       current: lastWeight,
       suggested: lastWeight,
       targetReps: nextReps,
-      message: lastWeight + ' ' + unit + ' \u00b7 probeer ' + numSets + '\u00d7' + nextReps
+      message: lastWeight + ' ' + unit + ' \u00b7 probeer ' + numSets + '\u00d7' + nextReps + ' (zelfde gewicht, meer herhalingen)'
     };
   }
 
@@ -819,9 +819,13 @@ var currentSet = 1;
 var totalSets = 3;
 var tmTimerInterval = null;
 var tmTimerSeconds = 0;
+var tmTimerEndTime = 0; // absolute end time for robust timer
 var tmState = 'idle'; // idle, set, resting
 var sessionExerciseLog = {};
+var _lastActivityTime = Date.now();
+var _idleCheckInterval = null;
 var trainingStartTime = null;
+var trainingStartDate = null; // Vastgezet bij start, voorkomt middernacht-bug
 var trainingPhase = 'warmup'; // warmup, exercises, cooldown
 
 function unlockAudio() {
@@ -839,12 +843,16 @@ function unlockAudio() {
 }
 
 function startTrainingMode(trainingKey) {
-  unlockAudio(); // Activeer audio bij user-klik
+  unlockAudio();
+  // Check of er een gepauzeerde training is — voorkom conflict
+  if (hasPausedTraining()) {
+    if (!confirm('Je hebt nog een gepauzeerde training. Wil je die verwijderen en een nieuwe starten?')) return;
+    setStore('pausedTraining', null);
+  }
   currentTraining = TRAINING_DATA[trainingKey];
   currentTrainingKey = trainingKey;
   if (!currentTraining || currentTraining.type !== 'kracht') return;
 
-  // Use phase-aware exercise list
   currentExerciseIds = getTrainingExercises(trainingKey);
 
   trainingModeActive = true;
@@ -852,6 +860,7 @@ function startTrainingMode(trainingKey) {
   currentSet = 1;
   sessionExerciseLog = {};
   trainingStartTime = new Date().toISOString();
+  trainingStartDate = getTodayKey();
   tmState = 'idle';
   trainingPhase = 'warmup';
 
@@ -859,8 +868,31 @@ function startTrainingMode(trainingKey) {
   document.getElementById('trainingMode').classList.add('active');
   document.getElementById('bottomNav').style.display = 'none';
   document.body.style.overflow = 'hidden';
-  document.body.style.overflow = 'hidden';
+  startIdleCheck();
   renderTrainingStep();
+}
+
+function resetActivity() { _lastActivityTime = Date.now(); }
+
+function startIdleCheck() {
+  _lastActivityTime = Date.now();
+  clearInterval(_idleCheckInterval);
+  _idleCheckInterval = setInterval(function() {
+    if (!trainingModeActive) { clearInterval(_idleCheckInterval); return; }
+    // Only nudge when in 'idle' or 'set' state (not during timed rest/timer)
+    if (tmState !== 'idle' && tmState !== 'set') return;
+    var idleMin = (Date.now() - _lastActivityTime) / 60000;
+    if (idleMin >= 20) {
+      _lastActivityTime = Date.now(); // Reset so we don't spam
+      if (confirm('Je training staat al 20 minuten stil. Wil je pauzeren?')) {
+        pauseTraining();
+      }
+    }
+  }, 60000); // Check every minute
+}
+
+function stopIdleCheck() {
+  clearInterval(_idleCheckInterval);
 }
 
 var trainingPaused = false;
@@ -990,6 +1022,7 @@ function exitTrainingMode(save) {
   clearInterval(tmTimerInterval);
   clearInterval(cardioTimerInterval);
   clearInterval(stretchTimerInterval);
+  stopIdleCheck();
   cardioTimerActive = false;
   tmState = 'idle';
   releaseWakeLock();
@@ -1435,6 +1468,7 @@ function startPlankTimer(seconds) {
 }
 
 function completeSet() {
+  resetActivity();
   var ex = getCurrentExercise();
   if (!ex) return;
 
@@ -1499,8 +1533,10 @@ function getNextExercisePreview() {
 
 function startRestTimer() {
   clearInterval(tmTimerInterval);
+  tmTimerEndTime = Date.now() + tmTimerSeconds * 1000;
   tmTimerInterval = setInterval(function() {
-    tmTimerSeconds--;
+    var remaining = Math.ceil((tmTimerEndTime - Date.now()) / 1000);
+    tmTimerSeconds = Math.max(0, remaining);
     var display = document.getElementById('tmTimerDisplay');
     if (display) display.textContent = formatTimer(tmTimerSeconds);
 
@@ -1514,6 +1550,7 @@ function startRestTimer() {
 }
 
 function skipRest() {
+  resetActivity();
   clearInterval(tmTimerInterval);
   tmState = 'idle';
 
@@ -1531,6 +1568,7 @@ function skipRest() {
 
 function addRestTime(secs) {
   tmTimerSeconds += secs;
+  tmTimerEndTime += secs * 1000;
   var display = document.getElementById('tmTimerDisplay');
   if (display) display.textContent = formatTimer(tmTimerSeconds);
 }
@@ -1576,8 +1614,9 @@ function goStepBack() {
 }
 
 function skipExercise() {
-  // Skip hele oefening — log als overgeslagen
   var ex = getCurrentExercise();
+  var exName = ex ? ex.name : 'deze oefening';
+  if (!confirm(exName + ' overslaan?')) return;
   if (ex) {
     for (var sk = 1; sk <= totalSets; sk++) {
       var skipKey = ex.id + '_s' + sk;
@@ -1768,9 +1807,8 @@ function saveFeedbackAndStartWandelen() {
 }
 
 function saveFinalSession() {
-  var todayKey = getTodayKey();
+  var todayKey = trainingStartDate || getTodayKey(); // Gebruik datum van start, niet nu
   var sessions = getStore('sessions', []);
-  // Update existing session for today with same trainingKey, or create new one
   var existingIdx = -1;
   sessions.forEach(function(s, i) {
     if (s.date === todayKey && s.trainingKey === (currentTrainingKey || '')) existingIdx = i;
@@ -2495,6 +2533,13 @@ function postponeTraining(trainingKey) {
   var tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   var tomorrowKey = tomorrow.getFullYear() + '-' + String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' + String(tomorrow.getDate()).padStart(2, '0');
+  // Check of morgen al een training gepland staat
+  var weekType = getWeekType();
+  var tomorrowScheduled = getSchedule(weekType)[tomorrow.getDay()];
+  if (tomorrowScheduled) {
+    var tName = TRAINING_DATA[tomorrowScheduled] ? TRAINING_DATA[tomorrowScheduled].name : tomorrowScheduled;
+    if (!confirm('Morgen staat al "' + tName + '" gepland. Wil je deze training er toch bij verschuiven?')) return;
+  }
   setStore('postponedTraining', {
     trainingKey: trainingKey,
     fromDate: todayKey,
@@ -3286,6 +3331,15 @@ function renderHistory() {
   var avgEnergy = calcAvgEnergy(sessions);
   var energyPeriod = calcAvgEnergyPeriod(sessions);
   html += '<div class="stat-box"><div class="stat-num">' + (avgEnergy > 0 ? avgEnergy.toFixed(1) : '-') + '/5</div><div class="stat-label">Gem. energie (' + energyPeriod + ')</div></div>';
+  // Total volume for kracht sessions
+  var krachtSessions = sessions.filter(function(s) { return s.exercises && s.exercises.length > 0; });
+  if (krachtSessions.length > 0) {
+    var lastKracht = krachtSessions[krachtSessions.length - 1];
+    var lastVol = calcSessionVolume(lastKracht);
+    if (lastVol > 0) {
+      html += '<div class="stat-box"><div class="stat-num">' + (lastVol >= 1000 ? (lastVol / 1000).toFixed(1) + 'k' : lastVol) + '</div><div class="stat-label">Laatste volume (kg)</div></div>';
+    }
+  }
   html += '</div></div>';
 
   // ── WEIGHT TREND CHART ──
@@ -3334,6 +3388,18 @@ function renderHistory() {
     html += '</table>';
 
     html += '<div class="chart-container" ><canvas id="strengthChart"></canvas></div>';
+    html += '</div>';
+  }
+
+  // ── VOLUME TREND CHART ──
+  var volSessions = sessions.filter(function(s) {
+    return s.exercises && s.exercises.length > 0 && calcSessionVolume(s) > 0;
+  }).slice(-15);
+  if (volSessions.length >= 3) {
+    html += '<div class="card">';
+    html += '<div class="card-header"><span class="icon">\uD83D\uDCCA</span> Volume per training</div>';
+    html += '<div style="padding:0 16px 4px;font-size:11px;color:var(--text-light)">Totaal gewicht \u00d7 herhalingen \u00d7 sets per krachtsessie</div>';
+    html += '<div class="chart-container"><canvas id="volumeChart"></canvas></div>';
     html += '</div>';
   }
 
@@ -4139,6 +4205,52 @@ function createProgressCharts(sessions, measurements, weightGoal) {
     }
   }
 
+  // ─── 4b. VOLUME TREND ───
+  var volCanvas = document.getElementById('volumeChart');
+  if (volCanvas) {
+    var vSessions = sessions.filter(function(s) {
+      return s.exercises && s.exercises.length > 0 && calcSessionVolume(s) > 0;
+    }).slice(-15);
+    if (vSessions.length >= 3) {
+      var volLabels = vSessions.map(function(s) { var d = new Date(s.date); return d.getDate() + '/' + (d.getMonth() + 1); });
+      var volData = vSessions.map(function(s) { return calcSessionVolume(s); });
+      _chartInstances.push(new Chart(volCanvas, {
+        type: 'bar',
+        data: {
+          labels: volLabels,
+          datasets: [{
+            label: 'Volume (kg)',
+            data: volData,
+            backgroundColor: 'rgba(39,174,96,0.5)',
+            borderColor: '#27AE60',
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          aspectRatio: isMobile ? 1.3 : 2,
+          plugins: {
+            legend: { display: false },
+            tooltip: Object.assign({}, defaultTooltip, {
+              callbacks: { label: function(ctx) { return 'Volume: ' + ctx.parsed.y.toLocaleString() + ' kg'; } }
+            })
+          },
+          scales: {
+            x: { ticks: { color: textColor, font: { size: chartFontSize }, maxRotation: 45 }, grid: { display: false } },
+            y: {
+              beginAtZero: true,
+              ticks: { color: textColor, font: { size: chartFontSize }, callback: function(v) { return v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v; } },
+              grid: { color: gridColor },
+              title: { display: true, text: 'Volume (kg)', color: textColor, font: { size: 11 } }
+            }
+          }
+        }
+      }));
+    }
+  }
+
   // ─── 4. ENERGY CHART ───
   var epCanvas = document.getElementById('energyPainChart');
   if (epCanvas) {
@@ -4751,6 +4863,19 @@ function getWeekTrainingCount() {
     if (schedule[d] && schedule[d] !== 'rust') count++;
   }
   return count;
+}
+
+function calcSessionVolume(session) {
+  if (!session.exercises) return 0;
+  var vol = 0;
+  session.exercises.forEach(function(ex) {
+    if (ex.skipped) return;
+    var w = ex.weight || 0;
+    var r = ex.reps || 0;
+    var s = ex.sets || 1;
+    vol += w * r * s;
+  });
+  return Math.round(vol);
 }
 
 function buildExerciseHistory(sessions) {

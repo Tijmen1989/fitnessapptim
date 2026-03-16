@@ -335,8 +335,8 @@ var EXERCISE_DB = {
     rest: 30,
     isBodyweight: true,
     tip: 'Nooit forceren. Stoppen bij pijn.',
-    videoUrl: '',
-    youtubeId: '',
+    videoUrl: 'https://musclewiki.com/media/uploads/videos/branded/male-bodyweight-neck-rotation-front.mp4',
+    youtubeId: 'G-VYVMmIhMQ',
     instruction: {
       goal: 'Nekmobiliteit behouden en nekklachten voorkomen. Je doet 3 oefeningen achter elkaar.',
       steps: [
@@ -357,8 +357,8 @@ var EXERCISE_DB = {
     rest: 30,
     isBodyweight: true,
     tip: 'Ontspannen bewegen, niet forceren',
-    videoUrl: '',
-    youtubeId: '',
+    videoUrl: 'https://musclewiki.com/media/uploads/videos/branded/male-bodyweight-arm-circles-front.mp4',
+    youtubeId: 'bqMsBSFCwBQ',
     instruction: {
       goal: 'Schoudermobiliteit verbeteren. Je doet 2 oefeningen achter elkaar.',
       steps: [
