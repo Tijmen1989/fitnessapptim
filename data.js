@@ -609,12 +609,12 @@ var STRETCH_ROUTINES = [
   },
   {
     id: 'hamstrings',
-    name: 'Hamstrings stretch',
+    name: 'Achterbeen stretch (staand)',
     duur: 30,
     perKant: true,
-    instruction: 'Ga op je rug liggen. Strek \u00e9\u00e9n been omhoog. Trek het been voorzichtig naar je toe met je handen achter je knie. Houd 30 seconden, wissel dan.',
+    instruction: 'Zet een voet een kleine stap naar voren, hiel op de grond, tenen omhoog. Buig licht door je achterste knie en leun met rechte rug voorover. Je voelt een rek achter in je bovenbeen. Houd 30 seconden, wissel dan.',
     videoUrl: 'videos/hamstrings.mp4',
-    focus: 'Been gestrekt houden, niet forceren'
+    focus: 'Rug recht houden, niet afronden.'
   },
   {
     id: 'quads',
@@ -636,12 +636,12 @@ var STRETCH_ROUTINES = [
   },
   {
     id: 'rug-stretch',
-    name: 'Rug stretch (cobra)',
+    name: 'Rug stretch (staand)',
     duur: 30,
     perKant: false,
-    instruction: 'Ga op je buik liggen, handen naast je schouders. Duw je bovenlichaam langzaam omhoog terwijl je heupen op de grond blijven. Strek je armen zover als comfortabel is. Houd 30 seconden.',
+    instruction: 'Sta rechtop. Leg je handen op je onderrug. Leun rustig naar achteren en duw je heupen licht naar voren. Je voelt een zachte rek in je onderrug. Houd 30 seconden.',
     videoUrl: 'videos/rug-stretch.mp4',
-    focus: 'Schouders laag houden, niet ophangen. Rustig ademen.'
+    focus: 'Niet te ver, rustig ademen. Knieën licht gebogen houden.'
   },
   {
     id: 'glutes',
