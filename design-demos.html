@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Opties — Fitness App 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #111; color: white; }
+
+.demo-header {
+  text-align: center;
+  padding: 40px 20px 20px;
+}
+.demo-header h1 { font-size: 28px; font-weight: 900; }
+.demo-header p { color: #999; margin-top: 8px; font-size: 14px; }
+
+.demos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  padding: 20px;
+  justify-content: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.demo-phone {
+  width: 375px;
+  height: 750px;
+  border-radius: 40px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  flex-shrink: 0;
+}
+
+.demo-label {
+  text-align: center;
+  padding: 16px 0 8px;
+  font-weight: 800;
+  font-size: 18px;
+}
+.demo-sublabel {
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 16px;
+}
+
+/* ============================
+   OPTION A: GLASSMORPHISM
+   ============================ */
+.phone-a {
+  background: linear-gradient(135deg, #7B3FA0 0%, #F74B7A 40%, #FCC200 70%, #8DC63F 100%);
+  background-size: 300% 300%;
+  animation: meshMove 8s ease infinite;
+}
+@keyframes meshMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.phone-a .topbar-a {
+  padding: 52px 20px 16px;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.phone-a .topbar-a h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.phone-a .topbar-a .sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  margin-top: 3px;
+}
+
+.phone-a .content-a { padding: 16px; }
+.phone-a .glass-card {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 14px;
+  color: white;
+}
+.phone-a .glass-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.phone-a .glass-card p {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.4;
+}
+.phone-a .glass-card .stat-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+.phone-a .glass-card .stat-row .stat {
+  flex: 1;
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+}
+.phone-a .glass-card .stat-row .stat .num {
+  font-size: 22px;
+  font-weight: 800;
+}
+.phone-a .glass-card .stat-row .stat .lbl {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  margin-top: 2px;
+}
+
+.phone-a .glow-btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 50px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(135deg, #8DC63F, #FCC200);
+  box-shadow: 0 4px 24px rgba(141,198,63,0.4), 0 0 40px rgba(141,198,63,0.15);
+  margin-top: 8px;
+  letter-spacing: -0.3px;
+}
+
+.phone-a .exercise-list-a {
+  margin-top: 8px;
+}
+.phone-a .ex-item-a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  font-size: 14px;
+}
+.phone-a .ex-item-a:last-child { border-bottom: none; }
+.phone-a .ex-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  flex-shrink: 0;
+}
+.phone-a .ex-info-a { flex: 1; }
+.phone-a .ex-sub-a { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+.phone-a .nav-a {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  padding: 10px 8px 28px;
+}
+.phone-a .nav-a .nav-a-item {
+  flex: 1;
+  text-align: center;
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  font-weight: 600;
+}
+.phone-a .nav-a .nav-a-item.active {
+  color: white;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 6px 0;
+  margin: -6px 4px 0;
+}
+.phone-a .nav-a .nav-a-item .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+
+/* ============================
+   OPTION B: NEON DARK MODE
+   ============================ */
+.phone-b {
+  background: #0A0A1A;
+}
+.phone-b .topbar-b {
+  padding: 52px 20px 16px;
+  background: #0A0A1A;
+  border-bottom: 1px solid #1A1A3A;
+}
+.phone-b .topbar-b h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+}
+.phone-b .topbar-b .sub { font-size: 13px; color: #666; margin-top: 3px; }
+
+.phone-b .content-b { padding: 16px; }
+.phone-b .neon-card {
+  background: #12122A;
+  border: 1px solid #222255;
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.phone-b .neon-card::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: -1px; right: -1px; bottom: -1px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #7B3FA0, #F74B7A, #FCC200);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.phone-b .neon-card:hover::before { opacity: 1; }
+
+.phone-b .neon-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.phone-b .neon-card p {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.phone-b .neon-card .stat-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+.phone-b .neon-card .stat-row .stat {
+  flex: 1;
+  background: #0A0A1A;
+  border: 1px solid #222255;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+}
+.phone-b .neon-card .stat-row .stat .num {
+  font-size: 22px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #8DC63F, #FCC200);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.phone-b .neon-card .stat-row .stat .lbl {
+  font-size: 11px;
+  color: #555;
+  margin-top: 2px;
+}
+
+.phone-b .neon-btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 50px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #0A0A1A;
+  background: #8DC63F;
+  box-shadow: 0 0 20px rgba(141,198,63,0.3), 0 0 60px rgba(141,198,63,0.1);
+  margin-top: 8px;
+  text-shadow: none;
+}
+
+.phone-b .exercise-list-b { margin-top: 8px; }
+.phone-b .ex-item-b {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #1A1A3A;
+  font-size: 14px;
+  color: #ccc;
+}
+.phone-b .ex-item-b:last-child { border-bottom: none; }
+.phone-b .ex-dot-b {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #7B3FA0;
+  box-shadow: 0 0 8px rgba(123,63,160,0.5);
+  flex-shrink: 0;
+}
+.phone-b .ex-sub-b { font-size: 12px; color: #555; }
+
+.phone-b .nav-b {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: #0D0D20;
+  border-top: 1px solid #1A1A3A;
+  display: flex;
+  padding: 10px 8px 28px;
+}
+.phone-b .nav-b .nav-b-item {
+  flex: 1;
+  text-align: center;
+  font-size: 10px;
+  color: #444;
+  font-weight: 600;
+}
+.phone-b .nav-b .nav-b-item.active {
+  color: #8DC63F;
+  text-shadow: 0 0 8px rgba(141,198,63,0.5);
+}
+.phone-b .nav-b .nav-b-item .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+
+/* ============================
+   OPTION C: BOLD COLOR BLOCKS
+   ============================ */
+.phone-c {
+  background: #F5F7FA;
+}
+.phone-c .topbar-c {
+  padding: 52px 20px 16px;
+  background: #7B3FA0;
+  color: white;
+}
+.phone-c .topbar-c h1 {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+.phone-c .topbar-c .sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 3px; }
+
+.phone-c .content-c { padding: 12px; }
+
+.phone-c .bold-card {
+  border-radius: 24px;
+  padding: 22px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.phone-c .bold-card.purple {
+  background: #7B3FA0;
+  color: white;
+}
+.phone-c .bold-card.lime {
+  background: #8DC63F;
+  color: #1A3A0A;
+}
+.phone-c .bold-card.pink {
+  background: #F74B7A;
+  color: white;
+}
+.phone-c .bold-card.white-card {
+  background: white;
+  color: #333;
+  border: 2px solid #E8ECF0;
+}
+
+.phone-c .bold-card h3 {
+  font-size: 20px;
+  font-weight: 900;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.5px;
+}
+.phone-c .bold-card p {
+  font-size: 13px;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+.phone-c .bold-card .stat-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.phone-c .bold-card .stat-row .stat {
+  flex: 1;
+  background: rgba(255,255,255,0.2);
+  border-radius: 14px;
+  padding: 10px;
+  text-align: center;
+}
+.phone-c .bold-card.white-card .stat-row .stat {
+  background: #F5F7FA;
+}
+.phone-c .bold-card .stat-row .stat .num {
+  font-size: 24px;
+  font-weight: 900;
+}
+.phone-c .bold-card .stat-row .stat .lbl {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+
+.phone-c .bold-btn {
+  display: block;
+  width: 100%;
+  padding: 18px;
+  border: none;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  color: #1A3A0A;
+  background: #FCC200;
+  box-shadow: 0 6px 20px rgba(252,194,0,0.3);
+  margin-top: 4px;
+  letter-spacing: -0.5px;
+}
+
+.phone-c .exercise-list-c { margin-top: 8px; }
+.phone-c .ex-item-c {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+.phone-c .bold-card.white-card .ex-item-c { color: #333; }
+.phone-c .ex-item-c:last-child { border-bottom: none; }
+
+.phone-c .nav-c {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: white;
+  border-top: 2px solid #E8ECF0;
+  display: flex;
+  padding: 8px 8px 28px;
+}
+.phone-c .nav-c .nav-c-item {
+  flex: 1;
+  text-align: center;
+  font-size: 10px;
+  color: #999;
+  font-weight: 700;
+}
+.phone-c .nav-c .nav-c-item.active {
+  color: white;
+  background: #7B3FA0;
+  border-radius: 14px;
+  padding: 6px 0;
+  margin: -2px 4px 0;
+}
+.phone-c .nav-c .nav-c-item .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+
+/* ============================
+   OPTION D: GLASS + BOLD MIX
+   ============================ */
+.phone-d {
+  background: linear-gradient(180deg, #7B3FA0 0%, #3A1F5A 30%, #1A1030 100%);
+}
+.phone-d .topbar-d {
+  padding: 52px 20px 16px;
+  background: transparent;
+}
+.phone-d .topbar-d h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: white;
+}
+.phone-d .topbar-d .sub { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+
+.phone-d .content-d { padding: 16px; }
+.phone-d .mix-card {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 14px;
+  color: white;
+}
+.phone-d .mix-card.accent-lime {
+  border-color: rgba(141,198,63,0.3);
+  background: rgba(141,198,63,0.08);
+}
+.phone-d .mix-card.accent-pink {
+  border-color: rgba(247,75,122,0.3);
+  background: rgba(247,75,122,0.08);
+}
+
+.phone-d .mix-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.phone-d .mix-card p {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.4;
+}
+
+.phone-d .mix-card .stat-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+.phone-d .mix-card .stat-row .stat {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+}
+.phone-d .mix-card .stat-row .stat .num {
+  font-size: 22px;
+  font-weight: 800;
+}
+.phone-d .mix-card .stat-row .stat .lbl {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  margin-top: 2px;
+}
+
+.phone-d .mix-btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 50px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  color: white;
+  background: linear-gradient(135deg, #F74B7A, #FCC200);
+  box-shadow: 0 4px 24px rgba(247,75,122,0.3);
+  margin-top: 8px;
+}
+
+.phone-d .exercise-list-d { margin-top: 8px; }
+.phone-d .ex-item-d {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 14px;
+  color: rgba(255,255,255,0.8);
+}
+.phone-d .ex-item-d:last-child { border-bottom: none; }
+.phone-d .ex-sub-d { font-size: 12px; color: rgba(255,255,255,0.4); }
+
+.phone-d .nav-d {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(26,16,48,0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  padding: 10px 8px 28px;
+}
+.phone-d .nav-d .nav-d-item {
+  flex: 1;
+  text-align: center;
+  font-size: 10px;
+  color: rgba(255,255,255,0.35);
+  font-weight: 600;
+}
+.phone-d .nav-d .nav-d-item.active {
+  color: #FCC200;
+}
+.phone-d .nav-d .nav-d-item .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+/* Responsive */
+@media (max-width: 800px) {
+  .demos { flex-direction: column; align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="demo-header">
+  <h1>🎨 Kies je design stijl</h1>
+  <p>Scroll door de 4 opties en kies welke richting je op wilt</p>
+</div>
+
+<div class="demos">
+
+<!-- ======== OPTION A: GLASSMORPHISM ======== -->
+<div>
+  <div class="demo-label">A. Glassmorphism</div>
+  <div class="demo-sublabel">Frosted glass · Gradient mesh · Dreamy</div>
+  <div class="demo-phone phone-a">
+    <div class="topbar-a">
+      <h1>Hoi sexy hunk 💪</h1>
+      <div class="sub">vrijdag 27 maart</div>
+    </div>
+    <div class="content-a">
+      <div class="glass-card">
+        <h3>💪 Borst & Schouders</h3>
+        <p>3 sets per oefening · ~45 min</p>
+        <div class="stat-row">
+          <div class="stat"><div class="num">5</div><div class="lbl">oefeningen</div></div>
+          <div class="stat"><div class="num">15</div><div class="lbl">sets totaal</div></div>
+          <div class="stat"><div class="num">45</div><div class="lbl">minuten</div></div>
+        </div>
+        <div class="exercise-list-a">
+          <div class="ex-item-a"><div class="ex-dot"></div><div class="ex-info-a">Bench Press<div class="ex-sub-a">Barbell · 3×8-12</div></div></div>
+          <div class="ex-item-a"><div class="ex-dot"></div><div class="ex-info-a">Shoulder Press<div class="ex-sub-a">Dumbbell · 3×10-12</div></div></div>
+          <div class="ex-item-a"><div class="ex-dot"></div><div class="ex-info-a">Incline Flyes<div class="ex-sub-a">Dumbbell · 3×12-15</div></div></div>
+        </div>
+        <button class="glow-btn">Training starten ▶</button>
+      </div>
+      <div class="glass-card">
+        <h3>📊 Deze week</h3>
+        <div class="stat-row">
+          <div class="stat"><div class="num">3</div><div class="lbl">trainingen</div></div>
+          <div class="stat"><div class="num">🔥 4</div><div class="lbl">weken op rij</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-a">
+      <div class="nav-a-item active"><span class="nav-icon">🏠</span>Vandaag</div>
+      <div class="nav-a-item"><span class="nav-icon">📅</span>Planning</div>
+      <div class="nav-a-item"><span class="nav-icon">📊</span>Voortgang</div>
+      <div class="nav-a-item"><span class="nav-icon">👤</span>Profiel</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== OPTION B: NEON DARK ======== -->
+<div>
+  <div class="demo-label">B. Neon Dark</div>
+  <div class="demo-sublabel">Deep dark · Neon glow · Cyberpunk</div>
+  <div class="demo-phone phone-b">
+    <div class="topbar-b">
+      <h1>Hoi sexy hunk 💪</h1>
+      <div class="sub">vrijdag 27 maart</div>
+    </div>
+    <div class="content-b">
+      <div class="neon-card">
+        <h3>💪 Borst & Schouders</h3>
+        <p>3 sets per oefening · ~45 min</p>
+        <div class="stat-row">
+          <div class="stat"><div class="num">5</div><div class="lbl">oefeningen</div></div>
+          <div class="stat"><div class="num">15</div><div class="lbl">sets totaal</div></div>
+          <div class="stat"><div class="num">45</div><div class="lbl">minuten</div></div>
+        </div>
+        <div class="exercise-list-b">
+          <div class="ex-item-b"><div class="ex-dot-b"></div><div>Bench Press<div class="ex-sub-b">Barbell · 3×8-12</div></div></div>
+          <div class="ex-item-b"><div class="ex-dot-b"></div><div>Shoulder Press<div class="ex-sub-b">Dumbbell · 3×10-12</div></div></div>
+          <div class="ex-item-b"><div class="ex-dot-b"></div><div>Incline Flyes<div class="ex-sub-b">Dumbbell · 3×12-15</div></div></div>
+        </div>
+        <button class="neon-btn">Training starten ▶</button>
+      </div>
+      <div class="neon-card">
+        <h3>📊 Deze week</h3>
+        <div class="stat-row">
+          <div class="stat"><div class="num">3</div><div class="lbl">trainingen</div></div>
+          <div class="stat"><div class="num">🔥 4</div><div class="lbl">weken op rij</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-b">
+      <div class="nav-b-item active"><span class="nav-icon">🏠</span>Vandaag</div>
+      <div class="nav-b-item"><span class="nav-icon">📅</span>Planning</div>
+      <div class="nav-b-item"><span class="nav-icon">📊</span>Voortgang</div>
+      <div class="nav-b-item"><span class="nav-icon">👤</span>Profiel</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== OPTION C: BOLD COLOR BLOCKS ======== -->
+<div>
+  <div class="demo-label">C. Bold Color Blocks</div>
+  <div class="demo-sublabel">Nike TC meets Duolingo · Speels · Energiek</div>
+  <div class="demo-phone phone-c">
+    <div class="topbar-c">
+      <h1>Hoi sexy hunk 💪</h1>
+      <div class="sub">vrijdag 27 maart</div>
+    </div>
+    <div class="content-c">
+      <div class="bold-card purple">
+        <h3>💪 Borst & Schouders</h3>
+        <p>3 sets per oefening · ~45 min</p>
+        <div class="stat-row">
+          <div class="stat"><div class="num">5</div><div class="lbl">oefeningen</div></div>
+          <div class="stat"><div class="num">15</div><div class="lbl">sets totaal</div></div>
+          <div class="stat"><div class="num">45</div><div class="lbl">minuten</div></div>
+        </div>
+        <div class="exercise-list-c">
+          <div class="ex-item-c"><div>→ Bench Press</div></div>
+          <div class="ex-item-c"><div>→ Shoulder Press</div></div>
+          <div class="ex-item-c"><div>→ Incline Flyes</div></div>
+        </div>
+        <button class="bold-btn">Training starten ▶</button>
+      </div>
+      <div class="bold-card lime">
+        <h3>📊 Deze week</h3>
+        <div class="stat-row">
+          <div class="stat"><div class="num">3</div><div class="lbl">trainingen</div></div>
+          <div class="stat"><div class="num">🔥 4</div><div class="lbl">weken op rij</div></div>
+        </div>
+      </div>
+      <div class="bold-card pink">
+        <h3>🎯 Motivatie</h3>
+        <p>Je bent al 4 weken op rij bezig. Keep going!</p>
+      </div>
+    </div>
+    <div class="nav-c">
+      <div class="nav-c-item active"><span class="nav-icon">🏠</span>Vandaag</div>
+      <div class="nav-c-item"><span class="nav-icon">📅</span>Planning</div>
+      <div class="nav-c-item"><span class="nav-icon">📊</span>Voortgang</div>
+      <div class="nav-c-item"><span class="nav-icon">👤</span>Profiel</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== OPTION D: MIX ======== -->
+<div>
+  <div class="demo-label">D. Glass + Bold Mix</div>
+  <div class="demo-sublabel">Dark gradient · Glass cards · Colored accents</div>
+  <div class="demo-phone phone-d">
+    <div class="topbar-d">
+      <h1>Hoi sexy hunk 💪</h1>
+      <div class="sub">vrijdag 27 maart</div>
+    </div>
+    <div class="content-d">
+      <div class="mix-card accent-lime">
+        <h3>💪 Borst & Schouders</h3>
+        <p>3 sets per oefening · ~45 min</p>
+        <div class="stat-row">
+          <div class="stat"><div class="num">5</div><div class="lbl">oefeningen</div></div>
+          <div class="stat"><div class="num">15</div><div class="lbl">sets totaal</div></div>
+          <div class="stat"><div class="num">45</div><div class="lbl">minuten</div></div>
+        </div>
+        <div class="exercise-list-d">
+          <div class="ex-item-d"><div>Bench Press<div class="ex-sub-d">Barbell · 3×8-12</div></div></div>
+          <div class="ex-item-d"><div>Shoulder Press<div class="ex-sub-d">Dumbbell · 3×10-12</div></div></div>
+          <div class="ex-item-d"><div>Incline Flyes<div class="ex-sub-d">Dumbbell · 3×12-15</div></div></div>
+        </div>
+        <button class="mix-btn">Training starten ▶</button>
+      </div>
+      <div class="mix-card">
+        <h3>📊 Deze week</h3>
+        <div class="stat-row">
+          <div class="stat"><div class="num">3</div><div class="lbl">trainingen</div></div>
+          <div class="stat"><div class="num">🔥 4</div><div class="lbl">weken op rij</div></div>
+        </div>
+      </div>
+      <div class="mix-card accent-pink">
+        <h3>🎯 Motivatie</h3>
+        <p>Je bent al 4 weken op rij bezig. Keep going!</p>
+      </div>
+    </div>
+    <div class="nav-d">
+      <div class="nav-d-item active"><span class="nav-icon">🏠</span>Vandaag</div>
+      <div class="nav-d-item"><span class="nav-icon">📅</span>Planning</div>
+      <div class="nav-d-item"><span class="nav-icon">📊</span>Voortgang</div>
+      <div class="nav-d-item"><span class="nav-icon">👤</span>Profiel</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div style="text-align:center;padding:40px 20px;color:#666;font-size:14px">
+  <p>Open dit bestand in je browser om de demo's te zien: <strong>design-demos.html</strong></p>
+</div>
+
+</body>
+</html>
