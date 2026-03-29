@@ -210,38 +210,57 @@ function daysSinceLastTraining() {
 // ================================================================
 function getMissedTrainings() {
   var now = new Date();
-  var dayOfWeek = now.getDay();
-  var weekType = getWeekType();
-  var schedule = getSchedule(weekType);
+  now.setHours(0,0,0,0);
   var sessions = getStore('sessions', []);
   var missed = [];
+  var seen = {};
 
-  for (var d = 1; d < dayOfWeek; d++) {
-    var scheduledKey = schedule[d];
+  // Look back up to 7 days (not including today)
+  for (var daysAgo = 1; daysAgo <= 7; daysAgo++) {
+    var checkDate = new Date(now);
+    checkDate.setDate(checkDate.getDate() - daysAgo);
+    var checkDow = checkDate.getDay(); // 0=zo, 1=ma, ..., 6=za
+
+    // Get the schedule that was active on that day
+    var checkWeekType = getWeekTypeForDate(checkDate);
+    var schedule = getSchedule(checkWeekType);
+    var scheduledKey = schedule[checkDow];
     if (!scheduledKey) continue;
     if (!TRAINING_DATA[scheduledKey] || TRAINING_DATA[scheduledKey].type !== 'kracht') continue;
+    if (seen[scheduledKey]) continue; // avoid duplicates
 
-    var dayDate = new Date(now);
-    dayDate.setDate(dayDate.getDate() - (dayOfWeek - d));
-
-    var monday = new Date(now);
-    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
-    monday.setHours(0,0,0,0);
+    // Check if this training was done within 7 days around its scheduled date
+    var windowStart = new Date(checkDate);
+    windowStart.setDate(windowStart.getDate() - 1);
+    var windowEnd = new Date(now);
 
     var wasDone = sessions.some(function(s) {
       var sDate = new Date(s.date);
-      return s.trainingKey === scheduledKey && sDate >= monday;
+      sDate.setHours(0,0,0,0);
+      return s.trainingKey === scheduledKey && sDate >= windowStart && sDate <= windowEnd;
     });
 
     if (!wasDone) {
+      seen[scheduledKey] = true;
       missed.push({
         trainingKey: scheduledKey,
-        scheduledDay: d,
+        scheduledDay: checkDow,
+        daysAgo: daysAgo,
         name: TRAINING_DATA[scheduledKey].name || scheduledKey
       });
     }
   }
   return missed;
+}
+
+// Helper: get week type for any date (not just today)
+function getWeekTypeForDate(date) {
+  if (typeof getWeekType === 'function' && getWeekType.length === 0) {
+    // Current getWeekType() doesn't take a date param, so just return its value
+    // (Tim has a single fixed schedule, no alternating weeks)
+    return getWeekType();
+  }
+  return getWeekType();
 }
 
 function applyCatchUpSwap(missedKey) {
