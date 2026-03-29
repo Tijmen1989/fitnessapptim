@@ -119,6 +119,54 @@ var EXERCISE_DB = {
       mistake: 'Te ver naar achteren laten zakken waardoor je onderrug van het bankje komt. Houd je onderrug plat op het bankje.'
     }
   },
+  'reverse-fly': {
+    id: 'reverse-fly',
+    name: 'Reverse dumbbell fly',
+    apparaat: 'Dumbbells + bankje',
+    reps: '12\u201315',
+    defaultReps: 12,
+    defaultWeight: 4,
+    rest: 45,
+    tip: 'Licht gewicht, focus op knijpen tussen schouderbladen',
+    videoUrl: '',
+    youtubeId: 'ttvfGg9d76c',
+    instruction: {
+      goal: 'Achterste schouders en bovenrug (rhombo\u00efden) trainen. Voorkomt bovenrug- en nekpijn door push/pull balans.',
+      steps: [
+        'Ga op de rand van het bankje zitten, buig voorover met je borst richting je knie\u00ebn.',
+        'Laat de dumbbells onder je benen hangen, handpalmen naar elkaar.',
+        'Spreid je armen naar buiten en omhoog, alsof je vleugels uitslaat.',
+        'Knijp bovenaan je schouderbladen naar elkaar, houd 1 seconde vast.',
+        'Laat langzaam en gecontroleerd terugzakken.'
+      ],
+      focus: 'Denk aan "schouderbladen naar elkaar toe knijpen". Houd je armen licht gebogen. Het gewicht hoeft niet zwaar \u2014 het gaat om controle en squeeze.',
+      mistake: 'Te zwaar gewicht pakken en met momentum slingeren. Dit is een isolatie-oefening: langzaam en gecontroleerd.'
+    }
+  },
+  'prone-y-raise': {
+    id: 'prone-y-raise',
+    name: 'Prone Y-raise',
+    apparaat: 'Bankje + lichte dumbbells',
+    reps: '10\u201312',
+    defaultReps: 10,
+    defaultWeight: 2,
+    rest: 45,
+    tip: 'Heel licht gewicht! Focus op lage traps activeren',
+    videoUrl: '',
+    youtubeId: 'IVEteqJkMtc',
+    instruction: {
+      goal: 'Lage trapezius en bovenrug versterken. Verbetert houding en vermindert nekpijn.',
+      steps: [
+        'Ga op je buik op het bankje liggen, hoofd net over de rand.',
+        'Laat de dumbbells recht naar beneden hangen, duimen omhoog.',
+        'Til je armen omhoog in een Y-vorm (schuin naar voren).',
+        'Houd bovenaan 2 seconden vast, knijp je schouderbladen samen.',
+        'Laat langzaam zakken en herhaal.'
+      ],
+      focus: 'Duimen wijzen omhoog. Til niet te hoog \u2014 tot schouderhoogte is genoeg. Houd je nek neutraal (kijk naar de grond, niet omhoog).',
+      mistake: 'Te zwaar gewicht of je nek omhoog tillen. Begin met 1\u20132 kg, dit is zwaarder dan je denkt!'
+    }
+  },
   'bicep-curl': {
     id: 'bicep-curl',
     name: 'Bicep curl',
@@ -447,17 +495,17 @@ var PHASE_CONFIG = {
     name: 'Fase 1 \u2014 Basis',
     description: 'Basistechnieken leren, lichaam laten wennen',
     unlockRequirement: null,
-    krachtBoven: ['chest-press', 'shoulder-press', 'dumbbell-row', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
+    krachtBoven: ['chest-press', 'shoulder-press', 'dumbbell-row', 'reverse-fly', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
     krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'lower-back-ext', 'bird-dog', 'cat-cow'],
-    krachtCompound: ['chest-press', 'dumbbell-row', 'goblet-squat', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
+    krachtCompound: ['chest-press', 'dumbbell-row', 'reverse-fly', 'goblet-squat', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
   },
   2: {
     name: 'Fase 2 \u2014 Uitbreiding',
     description: 'Meer variatie, hogere gewichten, extra oefeningen',
     unlockRequirement: { sessions: 18, weeks: 6 },
-    krachtBoven: ['chest-press', 'incline-press', 'shoulder-press', 'dumbbell-row', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
+    krachtBoven: ['chest-press', 'incline-press', 'shoulder-press', 'dumbbell-row', 'reverse-fly', 'prone-y-raise', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
     krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'back-extension', 'lower-back-ext', 'bird-dog', 'cat-cow'],
-    krachtCompound: ['chest-press', 'incline-press', 'dumbbell-row', 'goblet-squat', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
+    krachtCompound: ['chest-press', 'incline-press', 'dumbbell-row', 'reverse-fly', 'prone-y-raise', 'goblet-squat', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
   }
 };
 
