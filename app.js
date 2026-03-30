@@ -5689,7 +5689,7 @@ function renderAgenda() {
     var weekType = weekNum % 2 === 0 ? 'A' : 'B';
     var isCurrentWeek = w === 0;
 
-    html += '<div class="agenda-week">';
+    html += '<div class="agenda-week"' + (isCurrentWeek ? ' id="agendaCurrentWeek"' : '') + '>';
     html += '<div class="agenda-week-header">';
     html += '<span>Week ' + weekNum + (w === -1 ? ' (vorige week)' : w === 0 ? ' (deze week)' : '') + '</span>';
     html += '</div>';
@@ -5760,6 +5760,12 @@ function renderAgenda() {
   }
 
   container.innerHTML = html;
+
+  // Auto-scroll to current week (vorige week is above, scroll past it)
+  setTimeout(function() {
+    var cw = document.getElementById('agendaCurrentWeek');
+    if (cw) cw.scrollIntoView({ behavior: 'auto', block: 'start' });
+  }, 50);
 }
 
 // ================================================================
