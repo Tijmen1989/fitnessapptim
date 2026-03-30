@@ -1,6 +1,16 @@
 // ================================================================
 // TRAINING DATA MODEL — Tim's Trainingsschema
 // ================================================================
+//
+// ⚠️ ONDERRUGPIJN-NOTITIE (30 maart 2026):
+// Tim heeft toenemende ONDERRUG-pijn. Zelfs 30 min rustig wandelen op
+// het strand geeft al flinke last. Oefeningen die de onderrug zwaar
+// belasten (superman, back-extension, lower-back-ext) zijn VERWIJDERD.
+// Goblet squat is vervangen door wall-sit (geen axiale rugbelasting).
+// Bird-dog, cat-cow, dead-bug en glute-bridge zijn therapeutisch en
+// BLIJVEN erin — deze helpen juist bij onderrugklachten.
+// → Tim: raadpleeg een fysiotherapeut voor een gerichte diagnose.
+//
 
 var EXERCISE_DB = {
   'chest-press': {
@@ -259,6 +269,28 @@ var EXERCISE_DB = {
       mistake: 'Knie\u00ebn naar binnen laten vallen of je rug ronden. Als je onderrug pijn doet, ga dan minder diep of sla de oefening over.'
     }
   },
+  'wall-sit': {
+    id: 'wall-sit',
+    name: 'Wall sit',
+    apparaat: 'Muur',
+    reps: '30\u201360 sec',
+    defaultReps: 30,
+    rest: 45,
+    isBodyweight: true,
+    tip: 'Rug plat tegen de muur, knieën op 90°. Geen druk op de onderrug.',
+    youtubeId: 'y-wV4Lz6wJU',
+    instruction: {
+      goal: 'Bovenbenen (quads) en billen versterken zonder axiale belasting op de rug. Veilig alternatief voor squats bij onderrugklachten.',
+      steps: [
+        'Ga met je rug tegen een muur staan.',
+        'Schuif naar beneden tot je knieën op 90° staan (of minder diep als dat comfortabeler is).',
+        'Houd je rug plat tegen de muur gedrukt.',
+        'Houd de positie vast voor de aangegeven tijd. Duw vanuit je hakken.'
+      ],
+      focus: 'Rug plat tegen de muur houden! Als je onderrug los komt van de muur, ga dan iets hoger zitten.',
+      mistake: 'Te diep gaan waardoor je rug van de muur loskomt, of je knieën voorbij je tenen laten komen.'
+    }
+  },
   'glute-bridge': {
     id: 'glute-bridge',
     name: 'Glute bridge',
@@ -496,16 +528,16 @@ var PHASE_CONFIG = {
     description: 'Basistechnieken leren, lichaam laten wennen',
     unlockRequirement: null,
     krachtBoven: ['chest-press', 'shoulder-press', 'dumbbell-row', 'reverse-fly', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
-    krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'lower-back-ext', 'bird-dog', 'cat-cow'],
-    krachtCompound: ['chest-press', 'dumbbell-row', 'reverse-fly', 'goblet-squat', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
+    krachtOnder: ['leg-ext', 'leg-curl', 'wall-sit', 'glute-bridge', 'bird-dog', 'cat-cow', 'dead-bug'],
+    krachtCompound: ['chest-press', 'dumbbell-row', 'reverse-fly', 'wall-sit', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
   },
   2: {
     name: 'Fase 2 \u2014 Uitbreiding',
     description: 'Meer variatie, hogere gewichten, extra oefeningen',
     unlockRequirement: { sessions: 18, weeks: 6 },
     krachtBoven: ['chest-press', 'incline-press', 'shoulder-press', 'dumbbell-row', 'reverse-fly', 'prone-y-raise', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug'],
-    krachtOnder: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'back-extension', 'lower-back-ext', 'bird-dog', 'cat-cow'],
-    krachtCompound: ['chest-press', 'incline-press', 'dumbbell-row', 'reverse-fly', 'prone-y-raise', 'goblet-squat', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
+    krachtOnder: ['leg-ext', 'leg-curl', 'wall-sit', 'glute-bridge', 'bird-dog', 'cat-cow', 'dead-bug'],
+    krachtCompound: ['chest-press', 'incline-press', 'dumbbell-row', 'reverse-fly', 'prone-y-raise', 'wall-sit', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
   }
 };
 
@@ -515,30 +547,30 @@ var TRAINING_DATA = {
     name: 'Kracht: bovenlichaam + core',
     description: 'Focus op borst, schouders, rug en armen. Core stabiliteit met plank en dead bug.',
     type: 'kracht',
-    warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
+    warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, rustig wandelen' },
     cooldown: '5 min rustig wandelen, daarna deze stretches:',
     cooldownStretches: ['chest-doorway', 'hip-flexor', 'rug-stretch'],
     exerciseIds: ['chest-press', 'shoulder-press', 'dumbbell-row', 'dumbbell-pullover', 'bicep-curl', 'plank', 'dead-bug']
   },
   krachtOnder: {
     id: 'kracht-onder',
-    name: 'Kracht: onderlichaam + rug',
-    description: 'Focus op benen, billen en onderrug. Stabiliteit met core oefeningen.',
+    name: 'Kracht: onderlichaam + core',
+    description: 'Focus op benen, billen en core stabiliteit. Rugvriendelijke oefeningen.',
     type: 'kracht',
-    warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
+    warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, rustig wandelen' },
     cooldown: '5 min rustig wandelen, daarna deze stretches:',
     cooldownStretches: ['hamstrings', 'quads', 'glutes', 'hip-flexor'],
-    exerciseIds: ['leg-ext', 'leg-curl', 'goblet-squat', 'glute-bridge', 'superman', 'lower-back-ext', 'bird-dog', 'cat-cow']
+    exerciseIds: ['leg-ext', 'leg-curl', 'wall-sit', 'glute-bridge', 'bird-dog', 'cat-cow', 'dead-bug']
   },
   krachtCompound: {
     id: 'kracht-compound',
     name: 'Kracht: compound power',
-    description: 'Zware samengestelde oefeningen voor maximale spiergroei. Boven + onder in \u00e9\u00e9n sessie.',
+    description: 'Samengestelde oefeningen voor spiergroei. Boven + onder in \u00e9\u00e9n sessie. Rugvriendelijk.',
     type: 'kracht',
-    warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, licht joggen of stevig wandelen' },
+    warmup: { apparaat: 'Loopband', duur: '5\u20138 min', detail: '5.5\u20136.0 km/u, rustig wandelen' },
     cooldown: '5 min rustig wandelen, daarna volledige stretchroutine:',
     cooldownStretches: ['hip-flexor', 'hamstrings', 'quads', 'chest-doorway', 'rug-stretch', 'glutes'],
-    exerciseIds: ['chest-press', 'dumbbell-row', 'goblet-squat', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
+    exerciseIds: ['chest-press', 'dumbbell-row', 'wall-sit', 'shoulder-press', 'glute-bridge', 'plank', 'dead-bug']
   },
   loopband: {
     id: 'loopband',
