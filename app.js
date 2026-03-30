@@ -5682,8 +5682,8 @@ function renderAgenda() {
   html += '<div class="agenda-legend-item"><div class="agenda-legend-dot" style="background:transparent;border:2px solid var(--border)"></div>Rust</div>';
   html += '</div>';
 
-  // Show 4 weeks: this week + 3 ahead
-  for (var w = 0; w < 4; w++) {
+  // Show 5 weeks: previous week + this week + 3 ahead
+  for (var w = -1; w < 4; w++) {
     var weekStart = getMonday(now, w);
     var weekNum = getWeekNumber(weekStart);
     var weekType = weekNum % 2 === 0 ? 'A' : 'B';
@@ -5691,8 +5691,7 @@ function renderAgenda() {
 
     html += '<div class="agenda-week">';
     html += '<div class="agenda-week-header">';
-    html += '<span>Week ' + weekNum + '</span>';
-    // Week badge hidden for Tim - same schedule every week
+    html += '<span>Week ' + weekNum + (w === -1 ? ' (vorige week)' : w === 0 ? ' (deze week)' : '') + '</span>';
     html += '</div>';
     html += '<div class="agenda-days">';
 
